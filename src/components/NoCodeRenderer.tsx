@@ -8,7 +8,10 @@ import { audioService } from '../utils/audio';
 import { 
   Sparkles, Keyboard, Award, CheckCircle2, 
   HelpCircle, ChevronDown, MessageSquare, Play, 
-  Check, PlayCircle, Star, Award as BadgeIcon 
+  Check, PlayCircle, Star, Award as BadgeIcon,
+  Share2, Megaphone, ShoppingCart, Film, User, 
+  Presentation, Building2, MapPin, Music, LayoutGrid, 
+  Terminal, Repeat, ShoppingBag, GitFork, BookOpen, Swords, Code
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -1536,6 +1539,52 @@ print("Xin chào chiến binh " + ten)`}
 
                     </div>
 
+                    {/* Topview Styled Circular Toolbar */}
+                    <div className="w-full max-w-4xl mx-auto mt-8 mb-6">
+                      <div className="flex items-center justify-between overflow-x-auto no-scrollbar gap-4 py-2 px-1">
+                        {[
+                          { label: 'Trợ Lý AI', icon: Sparkles, color: '#ec4899', tab: 'ai', prompt: 'Hãy viết ví dụ đơn giản giải thích cấu trúc lập trình Python cho người mới bắt đầu.' },
+                          { label: 'Luyện Tập', icon: Terminal, color: '#ef4444', tab: 'code', code: 'print("Chào mừng bạn đến với Môi trường IDE thực chiến!")' },
+                          { label: 'Đường Đua', icon: MapPin, color: '#f59e0b', action: 'roadmap' },
+                          { label: 'Bài Học', icon: BookOpen, color: '#f97316', action: 'student-dashboard' },
+                          { label: 'Đấu Boss', icon: Swords, color: '#8b5cf6', action: 'boss-battle' },
+                          { label: 'Biến Số', icon: Code, color: '#6366f1', tab: 'code', code: 'x = 10\ny = 20\ntong = x + y\nprint(tong)' },
+                          { label: 'Điều Kiện', icon: GitFork, color: '#3b82f6', tab: 'ai', prompt: 'Giải thích lệnh if-else trong Python bằng hình ảnh ẩn dụ thực tế.' },
+                          { label: 'Vòng Lặp', icon: Repeat, color: '#10b981', tab: 'ai', prompt: 'Làm sao để dừng một vòng lặp vô chậm (infinite loop) trong Python?' },
+                          { label: 'Cửa Hàng', icon: ShoppingBag, color: '#111827', action: 'shop' },
+                          { label: 'Thi Thử', icon: Award, color: '#4b5563', action: 'exams' }
+                        ].map((tool, tIdx) => {
+                          const IconComponent = tool.icon;
+                          return (
+                            <button
+                              key={tIdx}
+                              onClick={() => {
+                                audioService.playClick();
+                                if (tool.tab) {
+                                  setHeroTab(tool.tab as any);
+                                  if (tool.tab === 'ai' && tool.prompt) setHeroAiInput(tool.prompt);
+                                  if (tool.tab === 'code' && tool.code) setHeroCode(tool.code);
+                                } else if (tool.action) {
+                                  setView(tool.action as any);
+                                }
+                              }}
+                              className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition group min-w-[70px] shrink-0"
+                            >
+                              <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform duration-205 group-hover:scale-115"
+                                style={{ backgroundColor: tool.color }}
+                              >
+                                <IconComponent size={20} className="stroke-[2.5]" />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-white transition whitespace-nowrap">
+                                {tool.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* Category Pills beneath */}
                     <div className="w-full flex items-center justify-center gap-2.5 overflow-x-auto no-scrollbar py-1">
                       {[
@@ -1563,6 +1612,89 @@ print("Xin chào chiến binh " + ten)`}
                           {pill.label}
                         </button>
                       ))}
+                    </div>
+
+                    {/* Topview Styled Skills Grid */}
+                    <div className="w-full max-w-4xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                      {[
+                        {
+                          title: 'Trợ Lý Gia Sư AI',
+                          icon: Sparkles,
+                          action: 'student-dashboard',
+                          subItems: [
+                            { title: 'Hỏi đáp lý thuyết', desc: 'Giải thích nhanh chóng các khái niệm Python khó nhằn.' },
+                            { title: 'Ví dụ trực quan', desc: 'Cung cấp code mẫu ngắn gọn kèm giải thích chi tiết.' },
+                            { title: 'Tóm tắt bài học', desc: 'Cô đọng kiến thức trọng tâm bám sát SGK Tin học 10.' },
+                            { title: 'Lộ trình cá nhân', desc: 'Gợi ý bài học tiếp theo dựa trên tiến độ học tập.' }
+                          ]
+                        },
+                        {
+                          title: 'Phân Tích Lỗi Code AI',
+                          icon: Terminal,
+                          action: 'practice',
+                          subItems: [
+                            { title: 'Phát hiện bug', desc: 'Quét cú pháp và chỉ ra dòng code bị lỗi trong 1 giây.' },
+                            { title: 'Giải thích tiếng Việt', desc: 'Dịch lỗi cú pháp tiếng Anh khó hiểu sang tiếng Việt.' },
+                            { title: 'Gợi ý sửa code', desc: 'Đưa ra định hướng tư duy logic thay vì cho sẵn đáp án.' },
+                            { title: 'Tối ưu thuật toán', desc: 'Gợi ý cách viết code Pythonic gọn gàng, hiệu quả.' }
+                          ]
+                        },
+                        {
+                          title: 'Game & Đấu Boss Lập Trình',
+                          icon: Swords,
+                          action: 'boss-battle',
+                          subItems: [
+                            { title: 'Đấu Boss Rồng Lửa', desc: 'Viết code đúng để vượt ải và đánh bại quái vật.' },
+                            { title: 'Đấu trường Arena', desc: 'Tranh tài lập trình với các học sinh trong lớp học.' },
+                            { title: 'Tích lũy Vàng & EXP', desc: 'Đổi điểm thưởng lấy vật phẩm trang bị độc quyền.' },
+                            { title: 'Cửa hàng trang bị', desc: 'Sắm Kiếm Lửa, Khiên Thần gia tăng sức mạnh của bạn.' }
+                          ]
+                        },
+                        {
+                          title: 'Chấm Điểm Tự Động (AI)',
+                          icon: Award,
+                          action: 'exams',
+                          subItems: [
+                            { title: 'Chấm bài siêu tốc', desc: 'Trả kết quả đánh giá tự động trong vòng tích tắc.' },
+                            { title: 'Đánh giá đa chiều', desc: 'Kiểm tra qua nhiều bộ test case khác nhau.' },
+                            { title: 'Thi thử trắc nghiệm', desc: 'Luyện tập đề kiểm tra học kỳ Tin học 10 chính xác.' },
+                            { title: 'Văn bằng số hóa', desc: 'Nhận chứng nhận học viên xuất sắc khi đạt 100% lộ trình.' }
+                          ]
+                        }
+                      ].map((skill, sIdx) => {
+                        const SkillIcon = skill.icon;
+                        return (
+                          <div 
+                            key={sIdx} 
+                            className="bg-slate-900/60 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 flex flex-col justify-between shadow-lg"
+                            data-aos="fade-up"
+                            data-aos-delay={sIdx * 100}
+                          >
+                            <div className="flex items-center justify-between mb-5">
+                              <div className="flex items-center gap-2.5">
+                                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
+                                  <SkillIcon size={20} className="stroke-[2.5]" />
+                                </div>
+                                <h3 className="text-sm sm:text-base font-extrabold text-white">{skill.title}</h3>
+                              </div>
+                              <button 
+                                onClick={() => { audioService.playClick(); setView(skill.action as any); }}
+                                className="text-[10px] font-bold px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-full transition cursor-pointer"
+                              >
+                                Xem thêm
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              {skill.subItems.map((item, iIdx) => (
+                                <div key={iIdx} className="bg-slate-950/40 border border-slate-900/40 rounded-xl p-3 hover:border-slate-800 transition flex flex-col text-left">
+                                  <h4 className="text-[11px] font-black text-slate-205 mb-1">{item.title}</h4>
+                                  <p className="text-[10px] text-slate-400 leading-relaxed">{item.desc}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
                   </div>

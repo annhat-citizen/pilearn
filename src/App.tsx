@@ -80,12 +80,41 @@ function MainLayout() {
         --font-bold: ${appearance.fontFamily === 'sans' ? '"Fredoka", sans-serif' : fontValue} !important;
       }
       body {
-        background: linear-gradient(135deg, #d8b4fe 0%, #ffccaa 50%, #fef08a 100%) !important;
-        background-attachment: fixed !important;
+        background: #030712 !important;
+        color: #f1f5f9 !important;
         font-family: ${fontValue} !important;
       }
+      /* Sync other page cards and containers to dark glassmorphism */
       .bg-white, .dark .bg-white {
-        background-color: ${appearance.backgroundColor === '#fffbf0' ? '#ffffff' : appearance.backgroundColor}ef !important;
+        background-color: rgba(15, 23, 42, 0.75) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #f1f5f9 !important;
+      }
+      .bg-slate-50, .dark .bg-slate-900/40, .bg-gray-50/50, .bg-gray-50 {
+        background-color: rgba(9, 15, 30, 0.6) !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
+      }
+      .text-slate-900, .text-slate-800, .text-slate-850, .text-gray-900, .text-gray-800, .text-slate-950 {
+        color: #f1f5f9 !important;
+      }
+      .text-gray-550, .text-slate-550 {
+        color: #64748b !important;
+      }
+      .text-gray-500, .text-slate-500, .text-slate-400, .text-gray-400 {
+        color: #94a3b8 !important;
+      }
+      .border-gray-200, .border-slate-200, .border-gray-100, .border-slate-100 {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      /* Input elements styling */
+      input, select, textarea {
+        background-color: rgba(15, 23, 42, 0.7) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f1f5f9 !important;
+      }
+      input::placeholder, textarea::placeholder {
+        color: #64748b !important;
       }
       .rounded-xl, .rounded-2xl, .rounded-3xl {
         border-radius: ${borderRadiusValue} !important;
@@ -144,10 +173,8 @@ function MainLayout() {
 
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
-  // Define layout colors based on theme and view
-  const baseLayoutClass = view === 'home' 
-    ? 'bg-[#030712] text-slate-100 dark:bg-[#030712] dark:text-gray-100' 
-    : 'bg-[#fffbf0] dark:bg-slate-900 text-slate-900 dark:text-gray-100';
+  // Define layout colors based on theme and view (all dark mode to match home page style)
+  const baseLayoutClass = 'bg-[#030712] text-slate-100 dark:bg-[#030712] dark:text-gray-100';
 
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
