@@ -32,7 +32,7 @@ async function callAI(systemPrompt: string, apiKey: string, jsonResponse: boolea
     try {
       const ai = new GoogleGenAI({ apiKey: finalGeminiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-2.5-flash',
         contents: systemPrompt,
         config: jsonResponse ? { responseMimeType: 'application/json' } : {}
       });
