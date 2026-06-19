@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "A user of the application (student, teacher, or admin).",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "teacher", "admin", "super_admin", "game_developer"] },
+        "points": { "type": "number" },
+        "createdAt": { "type": "number", "description": "Server timestamp" }
+      },
+      "required": ["email", "role", "createdAt"]
+    },
+    "lesson": {
+      "title": "Lesson",
+      "description": "A lesson module.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "chapterId": { "type": "string" },
+        "theory": { "type": "string" },
+        "labPrompt": { "type": "string" },
+        "labExpectedCode": { "type": "string" },
+        "challengePrompt": { "type": "string" },
+        "challengeExpectedCode": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "chapterId", "theory", "createdBy", "createdAt"]
+    },
+    "footnote_page": {
+      "title": "Footnote Page",
+      "description": "Dynamic CMS footnote page with rich markdown content and sub-articles.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "content": { "type": "string" },
+        "articles": {
+          "type": "array",
+          "description": "List of posts/articles inside this page",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["title", "content"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "user",
+      "description": "User profiles. Defines roles and total points."
+    },
+    "lessons/{lessonId}": {
+      "schema": "lesson",
+      "description": "List of lessons added by teachers/admins."
+    },
+    "footnote_pages/{pageId}": {
+      "schema": "footnote_page",
+      "description": "Dynamic footers pages edits."
+    }
+  }
+}

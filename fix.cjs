@@ -1,0 +1,12 @@
+const fs = require("fs");
+let c = fs.readFileSync("src/components/Footer.tsx", "utf-8");
+c = c.replace(/className="relative bg-\\[#1f4088\\] mt-20 pt-20 pb-10 text-white overflow-hidden"/g, `className="relative bg-slate-100 dark:bg-slate-900 mt-20 pt-20 pb-10 text-slate-800 dark:text-slate-200 overflow-hidden"`);
+c = c.replace(/className="fill-\\[#fffbf0\\] dark:fill-slate-900"/g, `className="fill-white dark:fill-slate-800"`);
+c = c.replace(/text-\\[#AABEE6\\]/g, "text-slate-500");
+c = c.replace(/bg-blue-800\/80 text-blue-200/g, "bg-slate-200 dark:bg-slate-800");
+c = c.replace(/bg-blue-800 text-blue-100/g, "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300");
+c = c.replace(/text-xl font-medium mb-6 md:mb-8 text-white/g, "text-xl font-bold mb-6");
+c = c.replace(/<ul className="space-y-4 text-\\[15px\\] text-slate-500 font-medium">/g, `<ul className="space-y-4 text-sm text-slate-500 dark:text-slate-400 font-medium">`);
+c = c.replace(/className="hover:text-white transition text-left"/g, `className="hover:text-blue-500 transition text-left"`);
+c = c.replace(/border-t border-blue-800\/80 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-blue-200\/80/g, `border-t border-slate-200 dark:border-slate-800 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500`);
+fs.writeFileSync("src/components/Footer.tsx", c);

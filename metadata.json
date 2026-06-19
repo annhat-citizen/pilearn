@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Pilearn",
+  "description": "Nền tảng No-Code Website Builder dành cho Giáo viên với dải công cụ Canva-like tùy biến phông chữ, in đậm, nghiêng, màu sắc, phóng to/thu nhỏ trực quan, hỗ trợ thiết lập nhạc nền xuyên suốt website và phát lặp tự động.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

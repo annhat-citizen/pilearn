@@ -1,0 +1,11 @@
+{
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/tutor", "destination": "/api/tutor" },
+    { "source": "/api/analyze-code", "destination": "/api/analyze-code" },
+    { "source": "/api/grade", "destination": "/api/grade" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

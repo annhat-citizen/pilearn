@@ -1,0 +1,171 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function existing() { return resource.data; }
+    function incoming() { return request.resource.data; }
+
+    function isValidUserRole(role) {
+      return role == 'student' || role == 'teacher' || role == 'admin' || role == 'super_admin' || role == 'game_developer';
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt'])
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 200
+        && data.role is string && isValidUserRole(data.role)
+        && data.createdAt is timestamp
+        && (data.get('displayName', '') is string)
+        && (data.get('points', 0) is int || data.get('points', 0) is float)
+        && (data.get('classId', '') is string);
+    }
+
+    function isValidLesson(data) {
+      return data.keys().hasAll(['title', 'chapterId', 'theory'])
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.chapterId is string && data.chapterId.size() > 0 && data.chapterId.size() <= 100
+        && data.theory is string && data.theory.size() <= 10000
+        && (data.get('labPrompt', '') is string)
+        && (data.get('labExpectedCode', '') is string)
+        && (data.get('challengePrompt', '') is string)
+        && (data.get('challengeExpectedCode', '') is string)
+        && (data.get('interactiveGames', []) is list)
+        && (data.get('targetClassIds', []) is list)
+        && (data.get('flashcards', []) is list)
+        && (data.get('miniQuiz', []) is list)
+        && (data.get('mindmapUrl', '') is string)
+        && (data.get('simulationUrl', '') is string);
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && (getUserData().role == 'admin' || getUserData().role == 'super_admin')) || (isSignedIn() && request.auth.token.email == 'fallight447@gmail.com');
+    }
+
+    function isSuperAdmin() {
+      return (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && getUserData().role == 'super_admin') || (isSignedIn() && request.auth.token.email == 'fallight447@gmail.com');
+    }
+
+    function isTeacher() {
+      return (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && (getUserData().role == 'teacher' || getUserData().role == 'admin' || getUserData().role == 'super_admin')) 
+             || (isSignedIn() && (request.auth.token.email == 'trucphuong270109@gmail.com' || request.auth.token.email == 'fallight447@gmail.com'));
+    }
+
+    function isGameDeveloper() {
+      return (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && (getUserData().role == 'game_developer' || getUserData().role == 'super_admin' || getUserData().role == 'admin'));
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidUser(incoming())
+        && incoming().createdAt == request.time
+        && incoming().role == 'student'
+        && (!incoming().keys().hasAny(['points']) || incoming().points == 0);
+
+      allow update: if isSignedIn() && isValidUser(incoming()) && (
+        isAdmin() || isTeacher() ||
+        (
+          request.auth.uid == userId
+          && incoming().role == existing().role
+          && incoming().email == existing().email
+          && incoming().createdAt == existing().createdAt
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if true;
+      allow create: if (isAdmin() || isTeacher())
+        && isValidLesson(incoming());
+      allow update: if (isAdmin() || isTeacher())
+        && isValidLesson(incoming());
+      allow delete: if isAdmin() || (isTeacher() && (!existing().keys().hasAny(['createdBy']) || existing().createdBy == request.auth.uid));
+    }
+
+    match /classes/{classId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /exams/{examId} {
+      allow read: if true;
+      allow create: if (isAdmin() || isTeacher())
+        && incoming().keys().hasAll(['title', 'description', 'questions', 'createdBy', 'createdAt'])
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && (incoming().get('targetClassIds', []) is list);
+      allow update: if (isAdmin() || isTeacher())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isAdmin() || (isTeacher() && existing().createdBy == request.auth.uid);
+    }
+
+    match /chapters/{chapterId} {
+      allow read: if true;
+      allow create: if (isAdmin() || isTeacher())
+        && incoming().keys().hasAll(['title', 'description', 'createdBy', 'createdAt'])
+        && incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 200
+        && incoming().description is string && incoming().description.size() <= 2000
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if (isAdmin() || isTeacher())
+        && incoming().keys().hasAll(['title', 'description', 'createdBy', 'createdAt'])
+        && incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 200
+        && incoming().description is string && incoming().description.size() <= 2000
+        && incoming().createdAt == existing().createdAt
+        && incoming().createdBy == existing().createdBy;
+      allow delete: if isAdmin() || (isTeacher() && existing().createdBy == request.auth.uid);
+    }
+
+    match /practices/{practiceId} {
+      allow read: if true;
+      allow create: if (isAdmin() || isTeacher())
+        && incoming().keys().hasAll(['title', 'level', 'points', 'description', 'expectedCode', 'createdBy', 'createdAt'])
+        && incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 200
+        && incoming().level is string
+        && (incoming().points is int || incoming().points is float)
+        && incoming().description is string
+        && incoming().expectedCode is string
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if (isAdmin() || isTeacher())
+        && incoming().keys().hasAll(['title', 'level', 'points', 'description', 'expectedCode', 'createdBy', 'createdAt'])
+        && incoming().createdAt == existing().createdAt
+        && incoming().createdBy == existing().createdBy;
+      allow delete: if isAdmin() || (isTeacher() && existing().createdBy == request.auth.uid);
+    }
+    
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin() || isGameDeveloper();
+    }
+
+    match /nocode_revisions/{revisionId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /footnote_pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
