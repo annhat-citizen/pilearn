@@ -1,7 +1,13 @@
 {
-  "buildCommand": "vite build",
+  "buildCommand": "npm install && vite build",
   "outputDirectory": "dist",
   "framework": null,
+  "installCommand": "npm install",
+  "functions": {
+    "api/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "rewrites": [
     { "source": "/api/tutor", "destination": "/api/tutor" },
     { "source": "/api/analyze-code", "destination": "/api/analyze-code" },
