@@ -1,239 +1,102 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppContext } from '../store';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  getLocalNoCodeConfig, 
-  saveNoCodeConfigDb, 
-  NoCodeConfig, 
-  fetchNoCodeConfigDb 
-} from '../lib/nocode_store';
+import { getLocalNoCodeConfig, NoCodeConfig } from '../lib/nocode_store';
 import { NoCodeRenderer } from '../components/NoCodeRenderer';
-import { 
-  Sparkles, Save, X, Edit3, Bell 
-} from 'lucide-react';
+import { ArrowRight, Sparkles, Shield, Code2, Users, BookOpen, Cpu, GraduationCap, Rocket } from 'lucide-react';
 
-interface HomeProps {
-  previewAlias?: string;
-}
-
-export function Home({ previewAlias = 'home' }: HomeProps) {
-  const { setView, role, authUser, profile, isEditMode, setIsEditMode } = useAppContext();
-  
-  const [config, setConfig] = useState<NoCodeConfig>(() => getLocalNoCodeConfig());
-  const [loading, setLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+export function Home() {
+  const { view, setView, authUser, login, isDataLoaded } = useAppContext();
+  const [localConfig, setLocalConfig] = useState<NoCodeConfig>(() => getLocalNoCodeConfig());
 
   useEffect(() => {
-    const syncDb = async () => {
-      setLoading(true);
-      const dbConfig = await fetchNoCodeConfigDb();
-      setConfig(dbConfig);
-      setLoading(false);
+    const handler = () => setLocalConfig(getLocalNoCodeConfig());
+    window.addEventListener('storage', handler);
+    window.addEventListener('pilearn_config_sync', handler);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('pilearn_config_sync', handler);
     };
-    syncDb();
-
-    const handleConfigSync = () => setConfig(getLocalNoCodeConfig());
-    window.addEventListener('pilearn_config_sync', handleConfigSync);
-    return () => window.removeEventListener('pilearn_config_sync', handleConfigSync);
   }, []);
 
-  const activePage = config.pages.find(p => p.alias === previewAlias) || config.pages[0];
+  if (!isDataLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
-  const handleBlockUpdate = (blockId: string, updatedBlock: any) => {
-    setConfig(prev => {
-      const updatedPages = prev.pages.map(page => {
-        if (page.alias === activePage.alias) {
-          return {
-            ...page,
-            blocks: page.blocks.map(b => b.id === blockId ? { ...b, ...updatedBlock } : b)
-          };
-        }
-        return page;
-      });
-      return { ...prev, pages: updatedPages };
-    });
-  };
-
-  const handleSaveLiveChanges = async () => {
-    setLoading(true);
-    setSaveStatus('Đang đồng bộ hóa dữ liệu lên Firestore...');
-    try {
-      await saveNoCodeConfigDb(config, profile?.email || 'admin@pilearn.com', `Chỉnh sửa trực tiếp (Live Edit) trang ${activePage.name}`);
-      window.dispatchEvent(new Event('pilearn_config_sync'));
-      setSaveStatus('Đã xuất bản mọi thay đổi trực tiếp lên website thành công!');
-      setTimeout(() => setSaveStatus(null), 4000);
-      setIsEditMode(false);
-    } catch (e) {
-      setSaveStatus('Lỗi lưu dữ liệu. Đã sao lưu bản nháp tại Local Storage.');
-      setTimeout(() => setSaveStatus(null), 4000);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancelLiveChanges = () => {
-    setConfig(getLocalNoCodeConfig());
-    setIsEditMode(false);
-  };
+  if (localConfig?.page?.home?.sections?.length > 0) {
+    return <NoCodeRenderer page="home" />;
+  }
 
   return (
-    <div className="w-full relative min-h-screen">
-      {config.systemSettings.showNotificationOnHome && config.systemSettings.systemNotification && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-medium py-2.5 px-4 text-center text-xs sm:text-sm flex items-center justify-center gap-2 relative z-20 border-b border-amber-100 dark:border-amber-900/30">
-          <Bell size={14} className="shrink-0" />
-          <span>{config.systemSettings.systemNotification}</span>
-        </div>
-      )}
-
-      {role === 'super_admin' && (
-        <div className="sticky top-16 z-50 max-w-5xl mx-auto px-4 mt-2">
-          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#0052cc] flex items-center justify-center">
-                <Sparkles size={16} className="text-white" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold uppercase text-[#0052cc] dark:text-blue-400">Trình Chỉnh Sửa Trực Tiếp</h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Click trực tiếp lên bất kỳ văn bản nào để sửa.</p>
-              </div>
+    <div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-blue-800">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTQwIDM4djQtSDI0di00aDE2ek00MCAyNHY0SDI0di00aDE2eiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
+        <div className="max-w-7xl mx-auto px-6 py-20 md:py-32 relative">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 text-white text-sm font-medium mb-6 backdrop-blur-sm">
+              <Sparkles className="w-4 h-4" /> Nền tảng học lập trình số 1 cho học sinh
             </div>
-
-            <div className="flex items-center gap-2.5">
-              <button 
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                  isEditMode 
-                    ? 'bg-amber-500 text-white' 
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                }`}
-              >
-                <Edit3 size={13} />
-                <span>{isEditMode ? 'Tắt Chỉnh Sửa' : 'Bật Click Sửa Trực Tiếp'}</span>
-              </button>
-
-              {isEditMode && (
-                <div className="flex items-center gap-2.5 border-l border-gray-200 dark:border-slate-700 pl-2.5">
-                  <button 
-                    onClick={handleSaveLiveChanges}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
-                  >
-                    <Save size={13} />
-                    <span>Lưu</span>
-                  </button>
-                  <button 
-                    onClick={handleCancelLiveChanges}
-                    className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-medium rounded-lg flex items-center gap-1 cursor-pointer"
-                  >
-                    <X size={13} />
-                    <span>Hủy</span>
-                  </button>
-                </div>
-              )}
+            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-6 tracking-tight">
+              Học Lập Trình{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-200">Dễ Dàng</span>
+              <br />Cùng PiLearn
+            </h1>
+            <p className="text-lg md:text-xl text-blue-100 max-w-xl mb-8 leading-relaxed">
+              Nền tảng học lập trình trực tuyến thân thiện, vui nhộn và hiệu quả. 
+              Phù hợp cho học sinh từ lớp 10 đến lớp 12.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => { if (!authUser) login(); else setView('roadmap'); }}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 active:scale-[0.97]"
+              >Bắt đầu ngay <ArrowRight className="w-4 h-4" /></button>
+              <button onClick={() => setView('roadmap')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/15 hover:bg-white/25 text-white font-semibold rounded-xl backdrop-blur-sm transition-all"
+              >Xem lộ trình</button>
             </div>
           </div>
-
-          <AnimatePresence>
-            {saveStatus && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 text-xs font-medium px-4 py-2.5 rounded-lg mt-2 text-center border border-amber-200 dark:border-amber-900/30"
-              >
-                {saveStatus}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
-      )}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 dark:from-slate-950 to-transparent" />
+      </section>
 
-      <div className="relative z-10 w-full">
-        {loading && !config ? (
-          <div className="py-24 text-center text-sm font-medium text-slate-500">
-            Đang đồng bộ giao diện No-Code...
-          </div>
-        ) : (
-          <NoCodeRenderer 
-            blocks={activePage.blocks}
-            appearance={{ ...config.appearance, ...(activePage?.appearance || {}) }}
-            isLiveEditing={isEditMode}
-            onBlockUpdate={handleBlockUpdate}
-            onMoveBlock={(id, dir) => {
-              setConfig(prev => {
-                const updatedPages = prev.pages.map(p => {
-                  if (p.alias === activePage.alias) {
-                    const blockIdx = p.blocks.findIndex(b => b.id === id);
-                    if (blockIdx === -1) return p;
-                    const nextIdx = dir === 'up' ? blockIdx - 1 : blockIdx + 1;
-                    if (nextIdx < 0 || nextIdx >= p.blocks.length) return p;
-                    const newBlocks = [...p.blocks];
-                    const temp = newBlocks[blockIdx];
-                    newBlocks[blockIdx] = newBlocks[nextIdx];
-                    newBlocks[nextIdx] = temp;
-                    return { ...p, blocks: newBlocks };
-                  }
-                  return p;
-                });
-                return { ...prev, pages: updatedPages };
-              });
-            }}
-            onDeleteBlock={(id) => {
-              if(!confirm('Bạn chắc chắn muốn xóa khối nội dung này?')) return;
-              setConfig(prev => {
-                const updatedPages = prev.pages.map(p => {
-                  if (p.alias === activePage.alias) {
-                    return { ...p, blocks: p.blocks.filter(b => b.id !== id) };
-                  }
-                  return p;
-                });
-                return { ...prev, pages: updatedPages };
-              });
-            }}
-            onAddBlockClick={(insertIdx) => {
-              const types: any[] = ['banner', 'text', 'video', 'cta', 'testimonial', 'ai', 'quiz', 'game', 'faq', 'pricing'];
-              const chosen = prompt(`Chọn loại khối bạn muốn thêm mới: \n\n${types.join(', ')} \n\nVí dụ: text`);
-              if (!chosen || !types.includes(chosen.trim().toLowerCase())) {
-                alert('Loại khối không hợp lệ!');
-                return;
-              }
-              const newType = chosen.trim().toLowerCase() as any;
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center mb-14">
+          <span className="text-xs font-bold uppercase tracking-widest text-primary-500">Tính năng</span>
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mt-2">Tại sao chọn PiLearn?</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-lg mx-auto">Nền tảng được thiết kế dành riêng cho học sinh phổ thông</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            { icon: BookOpen, title: 'Lộ trình học', desc: 'Bài học từ cơ bản đến nâng cao, phù hợp với mọi trình độ.', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30' },
+            { icon: Code2, title: 'Thực hành ngay', desc: 'Viết code trực tiếp trên trình duyệt với IDE tích hợp sẵn.', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30' },
+            { icon: Cpu, title: 'AI hỗ trợ', desc: 'Trợ lý AI thông minh giúp giải đáp thắc mắc 24/7.', color: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30' },
+            { icon: Shield, title: 'An toàn', desc: 'Môi trường học tập an toàn, lành mạnh cho học sinh.', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30' },
+            { icon: Users, title: 'Cộng đồng', desc: 'Kết nối với bạn bè, cùng nhau học tập và phát triển.', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30' },
+            { icon: GraduationCap, title: 'Chứng chỉ', desc: 'Nhận chứng chỉ sau mỗi khóa học hoàn thành.', color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/30' },
+          ].map((f, i) => (
+            <div key={i} className="cl-card p-6 group cursor-default">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${f.color} mb-4 group-hover:scale-110 transition-transform`}>
+                <f.icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-gray-900 dark:text-white mb-2">{f.title}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-              const newBlockMap: Record<string, Partial<any>> = {
-                banner: { title: 'Dòng tiêu đề Banner mới', subtitle: 'Phụ đề banner tinh gọn...', buttonText: 'Đăng ký học', imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=2070&auto=format&fit=crop' },
-                text: { title: 'Văn bản hướng dẫn', content: 'Nội dung khối văn bản mới của bạn.' },
-                video: { title: 'Khám phá bài giảng', videoUrl: 'https://youtube.com' },
-                cta: { title: 'Bắt đầu lập trình cùng Pilearn!', subtitle: 'Nhận vô vàn điểm thưởng và săn Boss quái vật.', buttonText: 'Bắt đầu ngay' },
-                testimonial: { title: 'Phản Hồi Mới', subtitle: 'Những nhận xét chân tình tuyệt hảo', testimonials: [{ name: 'Học sinh ẩn danh', school: 'THPT Việt Đức', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256', quote: 'LMS tốt nhất cả khu vực!', rating: 5 }] },
-                ai: { title: 'Trợ Lý Trí Tuệ Nhân Tạo Gia Sư', subtitle: 'Hãy đặt câu hỏi khó về Python cho AI' },
-                quiz: { title: 'Câu hỏi kích thích suy luận', quizQuestions: [{ prompt: 'Ký hiệu bình phương (mũ) trong Python là gì?', options: ['^', '**', '*'], answer: 1 }] },
-                game: { title: 'Thử thách lập trình nhỏ', subtitle: 'Viết biến kết quả', gameText: 'x = 10\ny = 20\nans = _____ # Điền x + y \nprint(ans)', gameExpectedAnswer: 'x + y', gameHint: 'Nghĩ cách cộng x và y lại với nhau' },
-                faq: { title: 'Giải đáp thắc mắc', faqItems: [{ question: 'Tôi có thể tải code về máy nhà không?', answer: 'Hoàn toàn được! Bạn có thể copy trực tiếp code từ trình IDE của Pilearn.' }] },
-                pricing: { title: 'Bảng phí thành viên', pricingTiers: [{ name: 'Trường học liên danh', price: 'Vui lòng liên hệ', period: 'Tháng', features: ['Quản lý toàn trường', 'Xuất excel học lực', 'Cấp chứng chỉ ký số'], highlight: true }] }
-              };
-
-              const createdBlock = {
-                id: `block-${Date.now()}`,
-                type: newType,
-                ...newBlockMap[newType],
-                align: 'left' as any,
-                paddingY: 10
-              };
-
-              setConfig(prev => {
-                const updatedPages = prev.pages.map(page => {
-                  if (page.alias === activePage.alias) {
-                    const newBlocks = [...page.blocks];
-                    newBlocks.splice(insertIdx, 0, createdBlock);
-                    return { ...page, blocks: newBlocks };
-                  }
-                  return page;
-                });
-                return { ...prev, pages: updatedPages };
-              });
-            }}
-          />
-        )}
-      </div>
+      <section className="bg-primary-50 dark:bg-primary-950/20 border-y border-primary-100 dark:border-primary-900/30">
+        <div className="max-w-7xl mx-auto px-6 py-16 text-center">
+          <Rocket className="w-10 h-10 text-primary-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">Sẵn sàng bắt đầu hành trình?</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Hàng ngàn học sinh đã bắt đầu học lập trình cùng PiLearn. Bạn còn chờ gì nữa?</p>
+          <button onClick={() => { if (!authUser) login(); else setView('roadmap'); }}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all active:scale-[0.97]"
+          >Đăng ký miễn phí <ArrowRight className="w-4 h-4" /></button>
+        </div>
+      </section>
     </div>
   );
 }

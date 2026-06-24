@@ -34,132 +34,79 @@ import { Sun, Moon } from 'lucide-react';
 import { PromoBanner } from './components/PromoBanner';
 
 function MainLayout() {
-  const { view, updateStudyTime, nocodeConfig, isEditMode } = useAppContext();
+  const { view, updateStudyTime, nocodeConfig } = useAppContext();
   const [isAppearanceEditorOpen, setIsAppearanceEditorOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' || 
-      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {
     const appearance = nocodeConfig?.appearance;
     if (!appearance) return;
-
     let styleTag = document.getElementById('dynamic-nocode-style-tag') as HTMLStyleElement;
     if (!styleTag) {
       styleTag = document.createElement('style');
       styleTag.id = 'dynamic-nocode-style-tag';
       document.head.appendChild(styleTag);
     }
-
-    const fontValue = 
-      appearance.fontFamily === 'mono' ? '"JetBrains Mono", monospace' : 
-      appearance.fontFamily === 'grotesk' ? '"Space Grotesk", sans-serif' :
-      appearance.fontFamily === 'serif' ? '"Playfair Display", serif' :
-      '"Inter", sans-serif';
-
-    const borderRadiusValue = 
-      appearance.borderRadius === 'none' ? '0px' :
-      appearance.borderRadius === 'md' ? '8px' :
-      appearance.borderRadius === '2xl' ? '16px' :
-      '24px';
-
+    const fontValue = appearance.fontFamily === 'mono' ? '"JetBrains Mono", monospace'
+      : appearance.fontFamily === 'grotesk' ? '"Space Grotesk", sans-serif'
+      : appearance.fontFamily === 'serif' ? '"Playfair Display", serif' : '"Inter", sans-serif';
+    const borderRadiusValue = appearance.borderRadius === 'none' ? '0px'
+      : appearance.borderRadius === 'md' ? '8px'
+      : appearance.borderRadius === '2xl' ? '16px' : '24px';
     styleTag.innerHTML = `
-      :root {
-        --color-primary-500: ${appearance.primaryColor} !important;
-        --color-primary-600: ${appearance.primaryColor}d0 !important;
-        --color-primary-400: ${appearance.primaryColor}ef !important;
-        --font-sans: ${fontValue} !important;
-        --font-bold: ${appearance.fontFamily === 'sans' ? '"Plus Jakarta Sans", sans-serif' : fontValue} !important;
-      }
-      body {
-        background: #0f172a !important;
-        color: #f1f5f9 !important;
-        font-family: ${fontValue} !important;
-      }
-      .bg-white, .dark .bg-white {
-        background-color: rgba(15, 23, 42, 0.75) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        color: #f1f5f9 !important;
-      }
-      .text-slate-900, .text-gray-900, .text-slate-800 {
-        color: #f1f5f9 !important;
-      }
-      .border-gray-200, .border-slate-200, .border-gray-100 {
-        border-color: rgba(255, 255, 255, 0.08) !important;
-      }
-      input, select, textarea {
-        background-color: rgba(15, 23, 42, 0.7) !important;
-        border-color: rgba(255, 255, 255, 0.1) !important;
-        color: #f1f5f9 !important;
-      }
-      input::placeholder, textarea::placeholder {
-        color: #64748b !important;
-      }
-      .rounded-xl, .rounded-2xl, .rounded-3xl {
-        border-radius: ${borderRadiusValue} !important;
-      }
+      :root { --color-primary-500: ${appearance.primaryColor} !important; --font-sans: ${fontValue} !important; }
+      body { background: #0f172a !important; color: #f1f5f9 !important; font-family: ${fontValue} !important; }
+      .bg-white, .dark .bg-white { background-color: rgba(15,23,42,0.75) !important; backdrop-filter: blur(16px) !important; border: 1px solid rgba(255,255,255,0.08) !important; color: #f1f5f9 !important; }
+      .text-slate-900, .text-gray-900, .text-slate-800 { color: #f1f5f9 !important; }
+      .border-gray-200, .border-slate-200 { border-color: rgba(255,255,255,0.08) !important; }
+      input, select, textarea { background-color: rgba(15,23,42,0.7) !important; border-color: rgba(255,255,255,0.1) !important; color: #f1f5f9 !important; }
+      input::placeholder, textarea::placeholder { color: #64748b !important; }
+      .rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: ${borderRadiusValue} !important; }
     `;
   }, [nocodeConfig.appearance]);
 
   useEffect(() => {
-    const interval = setInterval(() => updateStudyTime(60), 60000);
-    return () => clearInterval(interval);
+    const id = setInterval(() => updateStudyTime(60), 60000);
+    return () => clearInterval(id);
   }, [updateStudyTime]);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
-
-  const layoutBg = isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#f8fafc] text-slate-900';
-
   useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'BUTTON' || 
-        target.closest('button') || 
-        target.classList.contains('cursor-pointer') ||
-        target.dataset.interactive === 'true'
-      ) {
+    const handler = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.tagName === 'BUTTON' || t.closest('button') || t.classList.contains('cursor-pointer') || t.dataset.interactive === 'true') {
         audioService.playClick();
       }
     };
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
   }, []);
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${layoutBg}`}>
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       <PromoBanner />
-      <button 
-        onClick={toggleDarkMode}
-        className="fixed bottom-6 right-6 z-50 p-3 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:scale-105 transition-transform"
-        aria-label="Toggle Dark Mode"
-      >
-        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
+      <button onClick={() => setIsDarkMode(p => !p)}
+        className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform"
+        aria-label="Toggle theme"
+      >{isDarkMode ? <Sun size={16} /> : <Moon size={16} />}</button>
 
-      <div className="relative z-10 flex flex-col flex-1">
+      <div className="flex flex-col flex-1">
         <Navigation />
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={view}
-              initial={{ opacity: 0, y: 8 }}
+            <motion.div key={view}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="flex-1 flex flex-col"
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18 }}
             >
               {view === 'home' && <Home />}
               {view === 'roadmap' && <Roadmap />}

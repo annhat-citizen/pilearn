@@ -1,130 +1,178 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #0052cc;
-  --color-primary-600: #0041a3;
-  --color-primary-700: #00317a;
-  --color-primary-800: #002152;
-  --color-primary-900: #001029;
-
-  --color-accent-50: #ecfeff;
-  --color-accent-100: #cffafe;
-  --color-accent-200: #a5f3fc;
-  --color-accent-300: #67e8f9;
-  --color-accent-400: #22d3ee;
-  --color-accent-500: #00b4ff;
-  --color-accent-600: #0090cc;
-  --color-accent-700: #006c99;
-  --color-accent-800: #004866;
-  --color-accent-900: #002433;
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #034ea2;
+  --color-primary-600: #023d82;
+  --color-primary-700: #012d61;
+  --color-primary-800: #011c41;
+  --color-primary-900: #000c21;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-bold: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
-  body {
-    background-color: #f8fafc;
-    color: #0f172a;
+  * {
+    border-color: #e5e7eb;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-bold {
-    font-family: var(--font-bold);
+  body {
+    background-color: #f9fafb;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   button {
-    border-radius: 10px;
+    border-radius: 8px;
+    cursor: pointer;
   }
 
   input, textarea, select {
-    border-radius: 10px;
+    border-radius: 8px;
+    outline: none;
   }
 
-  .dark .bg-white {
-    background-color: #1e293b !important;
+  input:focus, textarea:focus, select:focus {
+    border-color: #034ea2;
+    box-shadow: 0 0 0 3px rgba(3, 78, 162, 0.1);
   }
 
-  .dark body, .dark .bg-[#fafafa], .dark .bg-[#f8fafc] {
-    background-color: #0f172a !important;
+  .dark body {
+    background-color: #0f172a;
+    color: #f1f5f9;
   }
 
-  .dark .text-slate-900, .dark .text-gray-900, .dark .text-black {
-    color: #f1f5f9 !important;
+  .dark * {
+    border-color: #334155;
   }
 
-  .dark .text-slate-700, .dark .text-gray-700, .dark .text-gray-600 {
-    color: #cbd5e1 !important;
+  .dark input, .dark textarea, .dark select {
+    background-color: #1e293b;
+    border-color: #475569;
+    color: #f1f5f9;
   }
 
-  .dark .text-gray-500, .dark .text-slate-500 {
-    color: #94a3b8 !important;
-  }
-
-  .dark .border-gray-200, .dark .border-gray-100, .dark .border-gray-300 {
-    border-color: #334155 !important;
-  }
-
-  .dark .bg-gray-50, .dark .bg-slate-50 {
-    background-color: #1e293b !important;
-  }
-
-  .dark .bg-gray-100, .dark .bg-slate-100 {
-    background-color: #334155 !important;
-  }
-
-  .dark .shadow-sm {
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+  .dark input:focus, .dark textarea:focus, .dark select:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
   }
 }
 
-.card {
+.cl-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
 
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  border-color: #cbd5e1;
+.cl-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border-color: #d1d5db;
 }
 
-.btn-primary {
-  background: #0052cc;
-  color: white;
+.dark .cl-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.dark .cl-card:hover {
+  border-color: #475569;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.cl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
-  padding: 10px 24px;
-  border-radius: 10px;
-  transition: background 0.2s ease, transform 0.1s ease;
+  font-size: 0.875rem;
+  padding: 9px 20px;
+  border-radius: 8px;
+  transition: all 0.15s;
 }
 
-.btn-primary:hover {
-  background: #0041a3;
+.cl-btn-primary {
+  background: #034ea2;
+  color: white;
 }
 
-.btn-primary:active {
+.cl-btn-primary:hover {
+  background: #023d82;
+}
+
+.cl-btn-primary:active {
   transform: scale(0.97);
 }
 
-.btn-ghost {
-  color: #475569;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 10px;
-  transition: background 0.2s ease;
+.cl-btn-outline {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
 }
 
-.btn-ghost:hover {
-  background: #f1f5f9;
+.cl-btn-outline:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.dark .cl-btn-outline {
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .cl-btn-outline:hover {
+  background: #374151;
+}
+
+.cl-btn-ghost {
+  background: transparent;
+  color: #4b5563;
+}
+
+.cl-btn-ghost:hover {
+  background: #f3f4f6;
+}
+
+.dark .cl-btn-ghost {
+  color: #9ca3af;
+}
+
+.dark .cl-btn-ghost:hover {
+  background: #374151;
+}
+
+.cl-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 9999px;
+}
+
+.cl-input {
+  width: 100%;
+  padding: 9px 12px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #111827;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dark .cl-input {
+  background: #1e293b;
+  border-color: #4b5563;
+  color: #f1f5f9;
 }
 
 body.focus-mode-active nav,
@@ -137,8 +185,7 @@ body.focus-mode-active main {
   padding-bottom: 0 !important;
 }
 
-body.focus-mode-active .mt-20,
-body.focus-mode-active .mb-8 {
+body.focus-mode-active .mt-20, body.focus-mode-active .mb-8 {
   margin-top: 1rem !important;
   margin-bottom: 1rem !important;
 }
