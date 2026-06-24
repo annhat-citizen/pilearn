@@ -1377,7 +1377,10 @@ Dấu \`f\` trước chuỗi viết tắt cho "Formatted string", giúp gắn c�
                                       // Call real tutor API
                                       const response = await fetch('/api/tutor', {
                                         method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
+                                        },
                                         body: JSON.stringify({
                                           studentMessage: prompt,
                                           context: 'Giao diện tương tác AI tại trang chủ',
