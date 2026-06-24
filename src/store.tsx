@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { ViewState, Role, ProgressState, Lesson, Chapter, ShopItem, Boss } from './types';
-import { supabase, Profile } from './lib/supabase';
-import { Session } from '@supabase/supabase-js';
 import { SYLLABUS as defaultSyllabus } from './data';
 import { audioService } from './utils/audio';
 import { NoCodeConfig, getLocalNoCodeConfig } from './lib/nocode_store';
@@ -11,10 +9,10 @@ interface AppContextType {
   view: ViewState;
   setView: (view: ViewState) => void;
   role: Role;
-  authUser: Session['user'] | null;
-  profile: Profile | null;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
+  authUser: null;
+  profile: { id: string; display_name: string; avatar_url: string; role: Role; xp: number };
+  login: () => void;
+  logout: () => void;
   
   selectedLesson: Lesson | null;
   setSelectedLesson: (lesson: Lesson | null) => void;
@@ -73,14 +71,14 @@ const getDaysDifference = (date1Str: string, date2Str: string) => {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 };
 
+const LOCAL_USER_ID = 'local-user-001';
+const LOCAL_PROFILE = { id: LOCAL_USER_ID, display_name: 'Học viên', avatar_url: '', role: 'student' as Role, xp: 0 };
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [view, setView] = useState<ViewState>('home');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [syllabus, setSyllabus] = useState<Chapter[]>(defaultSyllabus);
 
@@ -103,9 +101,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     { id: 'boss_3', name: 'Chúa Tể Bug', maxHp: 5000, image: '🐛' },
     { id: 'boss_pro', name: 'Trợ Lý AI Hắc Ám', maxHp: 10000, image: '🧙‍♂️' },
   ]);
-
-  const authUser = session?.user ?? null;
-  const role: Role = (profile?.role as Role) || 'student';
 
   const [progress, setProgress] = useState<ProgressState>(() => {
     try {
@@ -132,9 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const lastLevel = useRef(Math.floor((progress.xp || 0) / 100) + 1);
   useEffect(() => {
     const currentLevel = Math.floor((progress.xp || 0) / 100) + 1;
-    if (currentLevel > lastLevel.current) {
-      audioService.playLevelUp();
-    }
+    if (currentLevel > lastLevel.current) audioService.playLevelUp();
     lastLevel.current = currentLevel;
   }, [progress.xp]);
 
@@ -142,253 +135,83 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     const today = getTodayDateString();
     if (progress.lastActiveDate && progress.streak && progress.streak > 0) {
-      const diff = getDaysDifference(progress.lastActiveDate, today);
-      if (diff > 3) {
+      if (getDaysDifference(progress.lastActiveDate, today) > 3) {
         setProgress(prev => ({ ...prev, streak: 0 }));
       }
     }
   }, []);
 
-  // ============================================================
-  // Supabase Auth
-  // ============================================================
+  // Try loading data from Supabase (optional — fallback to defaults if tables don't exist)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) {
-        loadProfile(s.user.id);
-      } else {
-        setIsDataLoaded(true);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      if (s?.user) {
-        loadProfile(s.user.id);
-      } else {
-        setProfile(null);
-        setIsDataLoaded(true);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function loadProfile(userId: string) {
-    try {
-      let p = await sb.getProfile(userId);
-      if (!p) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { error } = await supabase.from('profiles').insert({
-            id: userId,
-            display_name: user.user_metadata?.full_name || user.email || 'User',
-            avatar_url: user.user_metadata?.avatar_url || '',
-            role: 'student',
-          });
-          if (!error) p = await sb.getProfile(userId);
-        }
-      }
-      setProfile(p);
-    } catch (e) {
-      console.error('Error loading profile:', e);
-    }
-    setIsDataLoaded(true);
-  }
-
-  // ============================================================
-  // Load data from Supabase tables (chapters, lessons, shop, bosses)
-  // ============================================================
-  useEffect(() => {
-    if (!authUser) return;
-
-    const loadChapters = async () => {
-      const chapters = await sb.getChapters();
-      if (chapters.length > 0) {
-        const merged: Chapter[] = [];
-        for (const ch of chapters) {
-          const lessons = await sb.getLessonsByChapter(ch.id);
-          merged.push({
-            id: ch.id,
-            title: ch.title,
-            description: ch.description,
-            level: ch.level,
-            icon: ch.icon,
-            lessons: lessons.map(l => ({
-              id: l.id,
-              title: l.title,
-              chapterId: l.chapter_id,
-              description: l.description,
-              theory: l.theory,
-              labPrompt: l.lab_prompt,
-              labExpectedCode: l.lab_expected_code,
-              challengePrompt: l.challenge_prompt,
-              challengeExpectedCode: l.challenge_expected_code,
-              duration: l.duration_minutes,
-            } as Lesson)),
-          });
-        }
-        setSyllabus(merged);
-      } else {
-        setSyllabus(defaultSyllabus);
-      }
-    };
-    loadChapters();
-  }, [authUser]);
-
-  useEffect(() => {
-    const loadGameData = async () => {
-      // Try loading from Supabase
-      const items = await sb.getShopItems();
-      if (items.length > 0) {
-        setShopItems(items.map(i => ({
-          id: i.id,
-          name: i.name,
-          description: i.description,
-          price: i.price,
-          damage: i.damage,
-          icon: i.type === 'weapon' ? 'Sword' : i.type === 'armor' ? 'Shield' : 'Heart',
-          color: i.type === 'weapon' ? 'bg-red-500' : i.type === 'armor' ? 'bg-blue-500' : 'bg-rose-500',
-        })));
-      }
-      const bossesData = await sb.getBosses();
-      if (bossesData.length > 0) {
-        setBosses(bossesData.map(b => ({
-          id: b.id,
-          name: b.name,
-          maxHp: b.max_hp,
-          image: b.emoji,
-        })));
-      }
-    };
-    loadGameData();
-  }, []);
-
-  // ============================================================
-  // Sync progress to Supabase
-  // ============================================================
-  useEffect(() => {
-    if (!authUser) return;
-    const syncProgress = async () => {
+    const load = async () => {
       try {
-        await sb.updateProfile(authUser.id, {
-          xp: progress.xp,
-          streak: progress.streak,
-          last_active_date: progress.lastActiveDate || getTodayDateString(),
-        });
-      } catch (e) {
-        console.error('Failed to sync progress:', e);
-      }
+        const [items, bossesData] = await Promise.all([sb.getShopItems(), sb.getBosses()]);
+        if (items.length > 0) {
+          setShopItems(items.map(i => ({
+            id: i.id, name: i.name, description: i.description, price: i.price, damage: i.damage,
+            icon: i.type === 'weapon' ? 'Sword' : i.type === 'armor' ? 'Shield' : 'Heart',
+            color: i.type === 'weapon' ? 'bg-red-500' : i.type === 'armor' ? 'bg-blue-500' : 'bg-rose-500',
+          })));
+        }
+        if (bossesData.length > 0) {
+          setBosses(bossesData.map(b => ({ id: b.id, name: b.name, maxHp: b.max_hp, image: b.emoji })));
+        }
+      } catch {}
+      setIsDataLoaded(true);
     };
-    const timer = setTimeout(syncProgress, 2000);
-    return () => clearTimeout(timer);
-  }, [progress.xp, progress.streak]);
+    load();
+  }, []);
 
   // ============================================================
-  // Auth actions
+  // Actions
   // ============================================================
-  const login = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) console.error(error);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  const login = () => {};
+  const logout = () => {};
 
-  const logout = async () => {
-    await sb.signOut();
-  };
-
-  // ============================================================
-  // Progress actions
-  // ============================================================
   const completeLesson = (lessonId: string, pointsEarned: number) => {
     setProgress(prev => {
       const today = getTodayDateString();
       const lastActive = prev.lastActiveDate || '';
-      
-      const updatedHistory = prev.streakHistory ? [...prev.streakHistory] : [];
-      if (!updatedHistory.includes(today)) {
-        updatedHistory.push(today);
-      }
-
-      let newStreak = (prev.streak || 0);
-      let showPopup = false;
-      if (!lastActive) {
-        newStreak = 1;
-        showPopup = true;
-      } else if (lastActive !== today) {
-        const diff = getDaysDifference(lastActive, today);
-        if (diff > 3) {
-          newStreak = 1;
-        } else {
-          newStreak += 1;
-        }
-        showPopup = true;
-      }
-
-      const safeCompletedLessons = prev.completedLessons || [];
-      const alreadyCompleted = safeCompletedLessons.includes(lessonId);
-
-      return {
-        ...prev,
-        completedLessons: alreadyCompleted ? safeCompletedLessons : [...safeCompletedLessons, lessonId],
-        points: (prev.points || 0) + (alreadyCompleted ? 0 : pointsEarned),
-        xp: (prev.xp || 0) + (alreadyCompleted ? 0 : pointsEarned * 10),
-        streak: newStreak,
-        lastActiveDate: today,
-        streakHistory: updatedHistory,
-        showStreakPopup: showPopup,
-      };
-    });
-
-    if (authUser) {
-      sb.upsertLessonProgress(authUser.id, lessonId, {
-        completed: true,
-        xp_earned: pointsEarned * 10,
-        score: pointsEarned,
-        completed_at: new Date().toISOString(),
-      }).catch(() => {});
-    }
-  };
-
-  const addXP = (amount: number) => {
-    setProgress(prev => ({ ...prev, xp: (prev.xp || 0) + amount }));
-    if (authUser) sb.addXp(authUser.id, amount).catch(() => {});
-  };
-
-  const submitExam = (examId: string, score: number) => {
-    setProgress(prev => {
-      const today = getTodayDateString();
-      const lastActive = prev.lastActiveDate || '';
-      
-      const updatedHistory = prev.streakHistory ? [...prev.streakHistory] : [];
+      const updatedHistory = [...(prev.streakHistory || [])];
       if (!updatedHistory.includes(today)) updatedHistory.push(today);
-
-      let newStreak = (prev.streak || 0);
+      let newStreak = prev.streak || 0;
       let showPopup = false;
       if (!lastActive) { newStreak = 1; showPopup = true; }
       else if (lastActive !== today) {
         newStreak = getDaysDifference(lastActive, today) > 3 ? 1 : newStreak + 1;
         showPopup = true;
       }
-
+      const safe = prev.completedLessons || [];
+      const done = safe.includes(lessonId);
       return {
-        ...prev,
-        examScores: { ...prev.examScores, [examId]: score },
-        points: (prev.points || 0) + Math.floor(score / 5),
-        xp: (prev.xp || 0) + score,
-        streak: newStreak,
-        lastActiveDate: today,
-        streakHistory: updatedHistory,
+        ...prev, completedLessons: done ? safe : [...safe, lessonId],
+        points: (prev.points || 0) + (done ? 0 : pointsEarned),
+        xp: (prev.xp || 0) + (done ? 0 : pointsEarned * 10),
+        streak: newStreak, lastActiveDate: today, streakHistory: updatedHistory,
         showStreakPopup: showPopup,
+      };
+    });
+  };
+
+  const addXP = (amount: number) => setProgress(prev => ({ ...prev, xp: (prev.xp || 0) + amount }));
+  const submitExam = (examId: string, score: number) => {
+    setProgress(prev => {
+      const today = getTodayDateString();
+      const lastActive = prev.lastActiveDate || '';
+      const updatedHistory = [...(prev.streakHistory || [])];
+      if (!updatedHistory.includes(today)) updatedHistory.push(today);
+      let newStreak = prev.streak || 0;
+      let showPopup = false;
+      if (!lastActive) { newStreak = 1; showPopup = true; }
+      else if (lastActive !== today) {
+        newStreak = getDaysDifference(lastActive, today) > 3 ? 1 : newStreak + 1;
+        showPopup = true;
+      }
+      return {
+        ...prev, examScores: { ...prev.examScores, [examId]: score },
+        points: (prev.points || 0) + Math.floor(score / 5),
+        xp: (prev.xp || 0) + score, streak: newStreak, lastActiveDate: today,
+        streakHistory: updatedHistory, showStreakPopup: showPopup,
       };
     });
   };
@@ -397,19 +220,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProgress(prev => {
       const today = getTodayDateString();
       const lastActive = prev.lastActiveDate || '';
-      const updatedHistory = prev.streakHistory ? [...prev.streakHistory] : [];
+      const updatedHistory = [...(prev.streakHistory || [])];
       if (!updatedHistory.includes(today)) updatedHistory.push(today);
-      if (!lastActive) {
-        return { ...prev, streak: 1, lastActiveDate: today, streakHistory: updatedHistory, showStreakPopup: true };
-      }
+      if (!lastActive) return { ...prev, streak: 1, lastActiveDate: today, streakHistory: updatedHistory, showStreakPopup: true };
       if (lastActive === today) return { ...prev, streakHistory: updatedHistory };
-      const diff = getDaysDifference(lastActive, today);
       return {
         ...prev,
-        streak: diff > 3 ? 1 : (prev.streak || 0) + 1,
-        lastActiveDate: today,
-        streakHistory: updatedHistory,
-        showStreakPopup: true,
+        streak: getDaysDifference(lastActive, today) > 3 ? 1 : (prev.streak || 0) + 1,
+        lastActiveDate: today, streakHistory: updatedHistory, showStreakPopup: true,
       };
     });
   };
@@ -420,17 +238,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const buyItem = (itemId: string, price: number) => {
     setProgress(prev => {
       if ((prev.points || 0) < price) return prev;
-      return {
-        ...prev,
-        points: prev.points - price,
-        inventory: { ...prev.inventory, [itemId]: (prev.inventory?.[itemId] || 0) + 1 },
-      };
+      return { ...prev, points: prev.points - price, inventory: { ...prev.inventory, [itemId]: (prev.inventory?.[itemId] || 0) + 1 } };
     });
   };
 
   const attackBoss = (bossId: string, itemId: string, damage: number) => {
     setProgress(prev => {
-      if (!prev.inventory || !prev.inventory[itemId]) return prev;
+      if (!prev.inventory?.[itemId]) return prev;
       return {
         ...prev,
         inventory: { ...prev.inventory, [itemId]: prev.inventory[itemId] - 1 },
@@ -441,24 +255,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const teacherAdjustPoints = (studentId: string, projectId: string, points: number, note: string) => {
     setProgress(prev => ({
-      ...prev,
-      points: prev.points + points,
+      ...prev, points: prev.points + points,
       teacherAdjustments: [...(prev.teacherAdjustments || []), { studentId, projectId, points, note }],
     }));
   };
 
   const updateProgress = (updater: (prev: ProgressState) => ProgressState) => setProgress(prev => updater(prev));
-
-  const updateGameData = async (items: ShopItem[], newBosses: Boss[]) => {
-    // Update local state
-    setShopItems(items);
-    setBosses(newBosses);
-  };
+  const updateGameData = async (items: ShopItem[], newBosses: Boss[]) => { setShopItems(items); setBosses(newBosses); };
 
   return (
     <AppContext.Provider
       value={{
-        view, setView, role, authUser, profile, login, logout,
+        view, setView, role: 'student', authUser: null, profile: LOCAL_PROFILE, login, logout,
         selectedLesson, setSelectedLesson,
         progress, completeLesson, addXP, submitExam, buyItem, attackBoss, teacherAdjustPoints,
         updateProgress,

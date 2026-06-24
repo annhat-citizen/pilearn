@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../store';
-import { UserCircle, LogOut, Swords, Settings, Menu, X, ChevronDown } from 'lucide-react';
+import { UserCircle, Swords, Settings, Menu, X } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { getLocalNoCodeConfig, NoCodeConfig } from '../lib/nocode_store';
 import { audioService } from '../utils/audio';
@@ -21,7 +21,7 @@ const Logo = () => (
 );
 
 export function Navigation() {
-  const { view, setView, role, authUser, profile, login, logout, progress, isDataLoaded } = useAppContext();
+  const { view, setView, profile, progress } = useAppContext();
   const { setIsSettingsOpen } = useSettings();
   const [noCodeLayout, setNoCodeLayout] = useState<NoCodeConfig>(() => getLocalNoCodeConfig());
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,11 +40,7 @@ export function Navigation() {
   const sysSettings = noCodeLayout?.systemSettings;
 
   const handleDashboard = () => {
-    if (!authUser) { login(); return; }
-    if (role === 'admin' || role === 'super_admin') setView('admin-dashboard');
-    else if (role === 'teacher') setView('teacher-dashboard');
-    else if (role === 'game_developer') setView('game-developer-dashboard');
-    else setView('student-dashboard');
+    setView('student-dashboard');
   };
 
   const navLinks = noCodeLayout?.menus?.length > 0
@@ -101,61 +97,37 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-2">
-            {isDataLoaded ? (
-              !authUser ? (
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { audioService.playClick(); login(); }} className="cl-btn cl-btn-ghost text-sm hidden sm:inline-flex">
-                    Đăng nhập
-                  </button>
-                  <button onClick={() => { audioService.playClick(); login(); }} className="cl-btn cl-btn-primary text-sm">
-                    Đăng ký
-                  </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { audioService.playClick(); handleDashboard(); }}
+                className="hidden sm:inline-flex cl-btn cl-btn-primary text-sm"
+              >Dashboard</button>
+
+              <div className="hidden sm:flex items-center gap-2 mr-1">
+                <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-600 select-none text-xs font-bold">
+                  <span>🔥</span>
+                  <span>{progress?.streak || 0}</span>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { audioService.playClick(); handleDashboard(); }}
-                    className={`hidden sm:inline-flex cl-btn text-sm ${
-                      ['admin-dashboard','teacher-dashboard','student-dashboard','game-developer-dashboard'].includes(view)
-                        ? 'cl-btn-primary' : 'cl-btn-ghost'
-                    }`}
-                  >Dashboard</button>
-
-                  {role === 'student' && (
-                    <div className="hidden sm:flex items-center gap-2 mr-1">
-                      <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 select-none text-xs font-bold">
-                        <span>🔥</span>
-                        <span>{progress?.streak || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-amber-500 leading-none">LV{Math.floor((progress?.xp || 0) / 100) + 1}</span>
-                        <div className="w-10 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(progress?.xp || 0) % 100}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1">
-                    <span className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-800">
-                      <UserCircle className="w-4 h-4 text-gray-400" />
-                      <span className="max-w-[80px] truncate">{profile?.displayName || 'User'}</span>
-                    </span>
-                    <button onClick={() => { audioService.playClick(); setIsSettingsOpen(true); }}
-                      className="p-2 text-gray-400 hover:text-primary-500 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors" title="Cài đặt">
-                      <Settings className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => { audioService.playClick(); logout(); }}
-                      className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="Đăng xuất">
-                      <LogOut className="w-4 h-4" />
-                    </button>
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-bold text-amber-500 leading-none">LV{Math.floor((progress?.xp || 0) / 100) + 1}</span>
+                  <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(progress?.xp || 0) % 100}%` }} />
                   </div>
                 </div>
-              )
-            ) : (
-              <div className="h-8 w-24 animate-pulse rounded-lg bg-gray-100 dark:bg-slate-800" />
-            )}
+              </div>
 
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800">
+              <div className="flex items-center gap-1">
+                <span className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-700 px-3 py-1.5 rounded-lg bg-gray-50">
+                  <UserCircle className="w-4 h-4 text-gray-400" />
+                  <span className="max-w-[80px] truncate">{profile?.displayName || 'Học viên'}</span>
+                </span>
+                <button onClick={() => { audioService.playClick(); setIsSettingsOpen(true); }}
+                  className="p-2 text-gray-400 hover:text-primary-500 rounded-lg hover:bg-gray-50 transition-colors" title="Cài đặt">
+                  <Settings className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100">
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>

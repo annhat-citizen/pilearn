@@ -1,9 +1,7 @@
 -- ============================================================
--- PiLearn Complete Schema & Seed (safe to run multiple times)
--- Uses IF NOT EXISTS to avoid "already exists" errors
+-- PiLearn Complete Schema (safe to run multiple times)
 -- ============================================================
 
--- Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -11,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- TABLES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   display_name TEXT NOT NULL DEFAULT '',
   avatar_url TEXT DEFAULT '',
   role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student','teacher','admin','super_admin','game_developer')),
@@ -184,66 +182,97 @@ CREATE TABLE IF NOT EXISTS public.user_achievements (
 );
 
 -- ============================================================
--- ROW LEVEL SECURITY (safe to re-run)
+-- ROW LEVEL SECURITY (drop + create for PG < 15 compat)
 -- ============================================================
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Anyone can read profiles" ON public.profiles;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY IF NOT EXISTS "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY IF NOT EXISTS "Anyone can read profiles" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Anyone can read profiles" ON public.profiles FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Anyone can read chapters" ON public.chapters;
+DROP POLICY IF EXISTS "Admins can manage chapters" ON public.chapters;
 ALTER TABLE public.chapters ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read chapters" ON public.chapters FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admins can manage chapters" ON public.chapters FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin')));
+CREATE POLICY "Anyone can read chapters" ON public.chapters FOR SELECT USING (true);
+CREATE POLICY "Admins can manage chapters" ON public.chapters FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin')));
 
+DROP POLICY IF EXISTS "Anyone can read lessons" ON public.lessons;
+DROP POLICY IF EXISTS "Admins can manage lessons" ON public.lessons;
 ALTER TABLE public.lessons ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read lessons" ON public.lessons FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admins can manage lessons" ON public.lessons FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','teacher')));
+CREATE POLICY "Anyone can read lessons" ON public.lessons FOR SELECT USING (true);
+CREATE POLICY "Admins can manage lessons" ON public.lessons FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','teacher')));
 
+DROP POLICY IF EXISTS "Users can read own progress" ON public.lesson_progress;
+DROP POLICY IF EXISTS "Users can insert own progress" ON public.lesson_progress;
+DROP POLICY IF EXISTS "Users can update own progress" ON public.lesson_progress;
 ALTER TABLE public.lesson_progress ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Users can read own progress" ON public.lesson_progress FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can insert own progress" ON public.lesson_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can update own progress" ON public.lesson_progress FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can read own progress" ON public.lesson_progress FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own progress" ON public.lesson_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own progress" ON public.lesson_progress FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can read exams" ON public.exams;
+DROP POLICY IF EXISTS "Teachers can manage exams" ON public.exams;
 ALTER TABLE public.exams ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read exams" ON public.exams FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Teachers can manage exams" ON public.exams FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','teacher')));
+CREATE POLICY "Anyone can read exams" ON public.exams FOR SELECT USING (true);
+CREATE POLICY "Teachers can manage exams" ON public.exams FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','teacher')));
 
+DROP POLICY IF EXISTS "Users can read own attempts" ON public.exam_attempts;
+DROP POLICY IF EXISTS "Users can insert own attempts" ON public.exam_attempts;
 ALTER TABLE public.exam_attempts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Users can read own attempts" ON public.exam_attempts FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can insert own attempts" ON public.exam_attempts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can read own attempts" ON public.exam_attempts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own attempts" ON public.exam_attempts FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can read shop items" ON public.shop_items;
+DROP POLICY IF EXISTS "Admins can manage shop items" ON public.shop_items;
 ALTER TABLE public.shop_items ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read shop items" ON public.shop_items FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admins can manage shop items" ON public.shop_items FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','game_developer')));
+CREATE POLICY "Anyone can read shop items" ON public.shop_items FOR SELECT USING (true);
+CREATE POLICY "Admins can manage shop items" ON public.shop_items FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','game_developer')));
 
+DROP POLICY IF EXISTS "Users can read own inventory" ON public.inventory;
+DROP POLICY IF EXISTS "Users can manage own inventory" ON public.inventory;
 ALTER TABLE public.inventory ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Users can read own inventory" ON public.inventory FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can manage own inventory" ON public.inventory FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can read own inventory" ON public.inventory FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage own inventory" ON public.inventory FOR ALL USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can read bosses" ON public.bosses;
+DROP POLICY IF EXISTS "Admins can manage bosses" ON public.bosses;
 ALTER TABLE public.bosses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read bosses" ON public.bosses FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admins can manage bosses" ON public.bosses FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','game_developer')));
+CREATE POLICY "Anyone can read bosses" ON public.bosses FOR SELECT USING (true);
+CREATE POLICY "Admins can manage bosses" ON public.bosses FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin','super_admin','game_developer')));
 
+DROP POLICY IF EXISTS "Users can read own attempts" ON public.boss_attempts;
+DROP POLICY IF EXISTS "Users can insert own attempts" ON public.boss_attempts;
 ALTER TABLE public.boss_attempts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Users can read own attempts" ON public.boss_attempts FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can insert own attempts" ON public.boss_attempts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can read own attempts" ON public.boss_attempts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own attempts" ON public.boss_attempts FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can read guilds" ON public.guilds;
+DROP POLICY IF EXISTS "Authenticated users can create guilds" ON public.guilds;
+DROP POLICY IF EXISTS "Guild leader can update guild" ON public.guilds;
 ALTER TABLE public.guilds ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read guilds" ON public.guilds FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Authenticated users can create guilds" ON public.guilds FOR INSERT WITH CHECK (auth.uid() = leader_id);
-CREATE POLICY IF NOT EXISTS "Guild leader can update guild" ON public.guilds FOR UPDATE USING (auth.uid() = leader_id);
+CREATE POLICY "Anyone can read guilds" ON public.guilds FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create guilds" ON public.guilds FOR INSERT WITH CHECK (auth.uid() = leader_id);
+CREATE POLICY "Guild leader can update guild" ON public.guilds FOR UPDATE USING (auth.uid() = leader_id);
 
+DROP POLICY IF EXISTS "Anyone can read guild members" ON public.guild_members;
+DROP POLICY IF EXISTS "Users can join guilds" ON public.guild_members;
+DROP POLICY IF EXISTS "Users can leave guilds" ON public.guild_members;
 ALTER TABLE public.guild_members ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read guild members" ON public.guild_members FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Users can join guilds" ON public.guild_members FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can leave guilds" ON public.guild_members FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Anyone can read guild members" ON public.guild_members FOR SELECT USING (true);
+CREATE POLICY "Users can join guilds" ON public.guild_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can leave guilds" ON public.guild_members FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Anyone can read achievements" ON public.achievements;
 ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read achievements" ON public.achievements FOR SELECT USING (true);
+CREATE POLICY "Anyone can read achievements" ON public.achievements FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can read own achievements" ON public.user_achievements;
+DROP POLICY IF EXISTS "Users can unlock achievements" ON public.user_achievements;
 ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Users can read own achievements" ON public.user_achievements FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "Users can unlock achievements" ON public.user_achievements FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can read own achievements" ON public.user_achievements FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can unlock achievements" ON public.user_achievements FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- ============================================================
 -- INDEXES
@@ -259,27 +288,6 @@ CREATE INDEX IF NOT EXISTS idx_guild_members_user_id ON public.guild_members(use
 CREATE INDEX IF NOT EXISTS idx_guild_members_guild_id ON public.guild_members(guild_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_xp ON public.profiles(xp DESC);
 CREATE INDEX IF NOT EXISTS idx_chapters_sort_order ON public.chapters(sort_order);
-
--- ============================================================
--- TRIGGER: Auto-create profile on signup
--- ============================================================
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, display_name, avatar_url)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email, 'User'),
-    COALESCE(NEW.raw_user_meta_data->>'avatar_url', '')
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================
 -- SEED DATA
