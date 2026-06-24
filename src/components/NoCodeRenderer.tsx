@@ -42,15 +42,11 @@ export function NoCodeRenderer({
   onReorderBlocks
 }: NoCodeRendererProps) {
   const { geminiApiKey } = useSettings();
-  const { login, authUser, setView, progress } = useAppContext();
+  const { setView } = useAppContext();
 
   const handleRegisterClick = () => {
     audioService.playClick();
-    if (!authUser) {
-      login();
-    } else {
-      setView('roadmap');
-    }
+    setView('roadmap');
   };
 
   // AI block state

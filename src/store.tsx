@@ -165,8 +165,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ============================================================
   // Actions
   // ============================================================
-  const login = () => {};
-  const logout = () => {};
+  const login = () => setView('roadmap');
+  const logout = () => setView('home');
 
   const completeLesson = (lessonId: string, pointsEarned: number) => {
     setProgress(prev => {

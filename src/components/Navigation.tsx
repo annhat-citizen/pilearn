@@ -97,35 +97,46 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <button onClick={() => { audioService.playClick(); handleDashboard(); }}
-                className="hidden sm:inline-flex cl-btn cl-btn-primary text-sm"
-              >Dashboard</button>
+            {view === 'home' ? (
+              <div className="flex items-center gap-2">
+                <button onClick={() => { audioService.playClick(); setView('roadmap'); }}
+                  className="cl-btn cl-btn-ghost text-sm hidden sm:inline-flex"
+                >Đăng nhập</button>
+                <button onClick={() => { audioService.playClick(); setView('roadmap'); }}
+                  className="cl-btn cl-btn-primary text-sm"
+                >Đăng ký</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button onClick={() => { audioService.playClick(); handleDashboard(); }}
+                  className="hidden sm:inline-flex cl-btn cl-btn-primary text-sm"
+                >Dashboard</button>
 
-              <div className="hidden sm:flex items-center gap-2 mr-1">
-                <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-600 select-none text-xs font-bold">
-                  <span>🔥</span>
-                  <span>{progress?.streak || 0}</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-amber-500 leading-none">LV{Math.floor((progress?.xp || 0) / 100) + 1}</span>
-                  <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(progress?.xp || 0) % 100}%` }} />
+                <div className="hidden sm:flex items-center gap-2 mr-1">
+                  <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-600 select-none text-xs font-bold">
+                    <span>🔥</span>
+                    <span>{progress?.streak || 0}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-bold text-amber-500 leading-none">LV{Math.floor((progress?.xp || 0) / 100) + 1}</span>
+                    <div className="w-10 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(progress?.xp || 0) % 100}%` }} />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-1">
-                <span className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-700 px-3 py-1.5 rounded-lg bg-gray-50">
-                  <UserCircle className="w-4 h-4 text-gray-400" />
-                  <span className="max-w-[80px] truncate">{profile?.displayName || 'Học viên'}</span>
-                </span>
-                <button onClick={() => { audioService.playClick(); setIsSettingsOpen(true); }}
-                  className="p-2 text-gray-400 hover:text-primary-500 rounded-lg hover:bg-gray-50 transition-colors" title="Cài đặt">
-                  <Settings className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <span className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-700 px-3 py-1.5 rounded-lg bg-gray-50">
+                    <UserCircle className="w-4 h-4 text-gray-400" />
+                    <span className="max-w-[80px] truncate">{profile?.displayName || 'Học viên'}</span>
+                  </span>
+                  <button onClick={() => { audioService.playClick(); setIsSettingsOpen(true); }}
+                    className="p-2 text-gray-400 hover:text-primary-500 rounded-lg hover:bg-gray-50 transition-colors" title="Cài đặt">
+                    <Settings className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100">
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

@@ -5,7 +5,7 @@ import { NoCodeRenderer } from '../components/NoCodeRenderer';
 import { ArrowRight, Sparkles, Shield, Code2, Users, BookOpen, Cpu, GraduationCap, Rocket } from 'lucide-react';
 
 export function Home() {
-  const { view, setView, authUser, login, isDataLoaded } = useAppContext();
+  const { view, setView, isDataLoaded } = useAppContext();
   const [localConfig, setLocalConfig] = useState<NoCodeConfig>(() => getLocalNoCodeConfig());
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export function Home() {
               Phù hợp cho học sinh từ lớp 10 đến lớp 12.
             </p>
             <div className="flex flex-wrap gap-3">
-              <button onClick={() => { if (!authUser) login(); else setView('roadmap'); }}
+              <button onClick={() => setView('roadmap')}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 active:scale-[0.97]"
               >Bắt đầu ngay <ArrowRight className="w-4 h-4" /></button>
               <button onClick={() => setView('roadmap')}
@@ -92,7 +92,7 @@ export function Home() {
           <Rocket className="w-10 h-10 text-primary-500 mx-auto mb-4" />
           <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">Sẵn sàng bắt đầu hành trình?</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Hàng ngàn học sinh đã bắt đầu học lập trình cùng PiLearn. Bạn còn chờ gì nữa?</p>
-          <button onClick={() => { if (!authUser) login(); else setView('roadmap'); }}
+          <button onClick={() => setView('roadmap')}
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all active:scale-[0.97]"
           >Đăng ký miễn phí <ArrowRight className="w-4 h-4" /></button>
         </div>

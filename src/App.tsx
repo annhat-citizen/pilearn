@@ -14,7 +14,6 @@ import { TeacherDashboard } from './views/TeacherDashboard';
 import { AdminDashboard } from './views/AdminDashboard';
 import { GameDeveloperDashboard } from './views/GameDeveloperDashboard';
 import { AboutUs } from './views/AboutUs';
-import { CompleteProfileModal } from './components/CompleteProfileModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Story } from './views/Story';
 import { Privacy } from './views/Privacy';
@@ -91,7 +90,6 @@ function MainLayout() {
         </main>
         <Footer />
       </div>
-      <CompleteProfileModal />
       <LevelUpPopup />
       <StreakPopup />
       <CommandPalette />
