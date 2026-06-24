@@ -4,7 +4,6 @@ import { audioService } from './utils/audio';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
-import { GlobalAppearanceEditor } from './components/GlobalAppearanceEditor';
 import { Home } from './views/Home';
 import { Roadmap } from './views/Roadmap';
 import { LessonView } from './views/LessonView';
@@ -34,40 +33,12 @@ import { Sun, Moon } from 'lucide-react';
 import { PromoBanner } from './components/PromoBanner';
 
 function MainLayout() {
-  const { view, updateStudyTime, nocodeConfig } = useAppContext();
-  const [isAppearanceEditorOpen, setIsAppearanceEditorOpen] = useState(false);
+  const { view, updateStudyTime } = useAppContext();
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
-
-  useEffect(() => {
-    const appearance = nocodeConfig?.appearance;
-    if (!appearance) return;
-    let styleTag = document.getElementById('dynamic-nocode-style-tag') as HTMLStyleElement;
-    if (!styleTag) {
-      styleTag = document.createElement('style');
-      styleTag.id = 'dynamic-nocode-style-tag';
-      document.head.appendChild(styleTag);
-    }
-    const fontValue = appearance.fontFamily === 'mono' ? '"JetBrains Mono", monospace'
-      : appearance.fontFamily === 'grotesk' ? '"Space Grotesk", sans-serif'
-      : appearance.fontFamily === 'serif' ? '"Playfair Display", serif' : '"Inter", sans-serif';
-    const borderRadiusValue = appearance.borderRadius === 'none' ? '0px'
-      : appearance.borderRadius === 'md' ? '8px'
-      : appearance.borderRadius === '2xl' ? '16px' : '24px';
-    styleTag.innerHTML = `
-      :root { --color-primary-500: ${appearance.primaryColor} !important; --font-sans: ${fontValue} !important; }
-      body { background: #0f172a !important; color: #f1f5f9 !important; font-family: ${fontValue} !important; }
-      .bg-white, .dark .bg-white { background-color: rgba(15,23,42,0.75) !important; backdrop-filter: blur(16px) !important; border: 1px solid rgba(255,255,255,0.08) !important; color: #f1f5f9 !important; }
-      .text-slate-900, .text-gray-900, .text-slate-800 { color: #f1f5f9 !important; }
-      .border-gray-200, .border-slate-200 { border-color: rgba(255,255,255,0.08) !important; }
-      input, select, textarea { background-color: rgba(15,23,42,0.7) !important; border-color: rgba(255,255,255,0.1) !important; color: #f1f5f9 !important; }
-      input::placeholder, textarea::placeholder { color: #64748b !important; }
-      .rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: ${borderRadiusValue} !important; }
-    `;
-  }, [nocodeConfig.appearance]);
 
   useEffect(() => {
     const id = setInterval(() => updateStudyTime(60), 60000);
@@ -131,7 +102,6 @@ function MainLayout() {
         </main>
         <Footer />
       </div>
-      <GlobalAppearanceEditor onClose={() => setIsAppearanceEditorOpen(false)} />
       <CompleteProfileModal />
       <LevelUpPopup />
       <StreakPopup />
