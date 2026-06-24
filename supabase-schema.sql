@@ -301,7 +301,7 @@ CREATE POLICY "Users can read own attempts"
   ON public.boss_attempts FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY("Users can insert own attempts")
+CREATE POLICY "Users can insert own attempts"
   ON public.boss_attempts FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
@@ -328,11 +328,11 @@ CREATE POLICY "Anyone can read guilds"
   ON public.guilds FOR SELECT
   USING (true);
 
-CREATE POLICY("Authenticated users can create guilds")
+CREATE POLICY "Authenticated users can create guilds"
   ON public.guilds FOR INSERT
   WITH CHECK (auth.uid() = leader_id);
 
-CREATE POLICY("Guild leader can update guild")
+CREATE POLICY "Guild leader can update guild"
   ON public.guilds FOR UPDATE
   USING (auth.uid() = leader_id);
 
@@ -354,11 +354,11 @@ CREATE POLICY "Anyone can read guild members"
   ON public.guild_members FOR SELECT
   USING (true);
 
-CREATE POLICY("Users can join guilds")
+CREATE POLICY "Users can join guilds"
   ON public.guild_members FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY("Users can leave guilds")
+CREATE POLICY "Users can leave guilds"
   ON public.guild_members FOR DELETE
   USING (auth.uid() = user_id);
 
@@ -398,7 +398,7 @@ CREATE POLICY "Users can read own achievements"
   ON public.user_achievements FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY("Users can unlock achievements")
+CREATE POLICY "Users can unlock achievements"
   ON public.user_achievements FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
