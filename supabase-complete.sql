@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.chapters (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE public.chapters ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS public.lessons (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS public.lessons (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE public.lessons ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS public.lesson_progress (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
