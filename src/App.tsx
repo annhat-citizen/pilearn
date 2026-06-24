@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { AppProvider, useAppContext } from './store';
 import { audioService } from './utils/audio';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -29,16 +29,10 @@ import { StreakPopup } from './components/StreakPopup';
 import { CommandPalette } from './components/CommandPalette';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sun, Moon } from 'lucide-react';
 import { PromoBanner } from './components/PromoBanner';
 
 function MainLayout() {
   const { view, updateStudyTime } = useAppContext();
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
 
   useEffect(() => {
     const id = setInterval(() => updateStudyTime(60), 60000);
@@ -46,9 +40,8 @@ function MainLayout() {
   }, [updateStudyTime]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -62,12 +55,8 @@ function MainLayout() {
   }, []);
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <PromoBanner />
-      <button onClick={() => setIsDarkMode(p => !p)}
-        className="fixed bottom-5 right-5 z-50 w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform"
-        aria-label="Toggle theme"
-      >{isDarkMode ? <Sun size={16} /> : <Moon size={16} />}</button>
 
       <div className="flex flex-col flex-1">
         <Navigation />
