@@ -9,7 +9,7 @@ import { audioService } from '../utils/audio';
 
 export function ExamCenter() {
   const { progress, submitExam, profile, role } = useAppContext();
-  const { geminiApiKey } = useSettings();
+  const { groqApiKey } = useSettings();
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -96,7 +96,7 @@ export function ExamCenter() {
                 method: 'POST',
                 headers: { 
                   'Content-Type': 'application/json',
-                  ...(geminiApiKey ? { 'X-Gemini-API-Key': geminiApiKey } : {})
+                   ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
                 },
                 body: JSON.stringify({ code: ans, prompt: q.prompt, expectedOutput: q.expectedOutput })
              });

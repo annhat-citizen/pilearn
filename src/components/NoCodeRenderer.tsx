@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NoCodeBlock, NoCodeAppearance } from '../lib/nocode_store';
-import { GoogleGenAI } from '@google/genai';
 import { useSettings } from '../contexts/SettingsContext';
 import { useAppContext } from '../store';
 import { audioService } from '../utils/audio';
@@ -41,7 +40,7 @@ export function NoCodeRenderer({
   onDeleteBlock,
   onReorderBlocks
 }: NoCodeRendererProps) {
-  const { geminiApiKey } = useSettings();
+  const { groqApiKey } = useSettings();
   const { setView } = useAppContext();
 
   const handleRegisterClick = () => {
@@ -482,7 +481,7 @@ export function NoCodeRenderer({
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'X-Gemini-API-Key': geminiApiKey } : {})
+          ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
         },
         body: JSON.stringify({
           studentMessage: promptText,

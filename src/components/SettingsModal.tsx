@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Key, X, Server, Shield, CheckCircle2, Music } from 'lucide-react';
 
 export function SettingsModal() {
-  const { geminiApiKey, setGeminiApiKey, isSettingsOpen, setIsSettingsOpen } = useSettings();
+  const { groqApiKey, setGroqApiKey, isSettingsOpen, setIsSettingsOpen } = useSettings();
 
   const [studentBgMusicEnabled, setStudentBgMusicEnabled] = React.useState(() => {
     return localStorage.getItem('pilearn_student_bg_music_muted') !== 'true';
@@ -65,36 +65,37 @@ export function SettingsModal() {
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
               {/* API Section */}
               <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-4 rounded-2xl text-xs sm:text-sm leading-relaxed border border-blue-100 dark:border-blue-800">
+                <div className="bg-purple-50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 p-4 rounded-2xl text-xs sm:text-sm leading-relaxed border border-purple-100 dark:border-purple-800">
                   <p>
-                    Hệ thống Gia Sư AI của chúng tôi rất đông người dùng và đôi khi máy chủ bị quá tải (báo lỗi hết Quota). 
-                    Bạn có thể <strong>nhập Gemini API Key cá nhân</strong> của bạn để ứng dụng chạy mượt mà không lo nghẽn mạng!
+                    AI Tutor sử dụng <strong>Groq</strong> (API miễn phí, chạy trên mô hình Llama 3). 
+                    Bạn có thể nhập <strong>Groq API Key</strong> cá nhân để dùng riêng, 
+                    hoặc để trống để hệ thống dùng key chia sẻ miễn phí.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <Key className="w-4 h-4 text-emerald-500" />
-                    Gemini API Key (Chạy trên máy cá nhân)
+                    Groq API Key (tùy chọn — miễn phí tại console.groq.com)
                   </label>
                   <input
                     type="password"
-                    value={geminiApiKey}
-                    onChange={(e) => setGeminiApiKey(e.target.value)}
-                    placeholder="Nhập API Key bắt đầu bằng AIzaSy..."
+                    value={groqApiKey}
+                    onChange={(e) => setGroqApiKey(e.target.value)}
+                    placeholder="Nhập Groq API Key bắt đầu bằng gsk_..."
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none dark:text-white dark:placeholder-slate-500 font-mono text-xs sm:text-sm transition-all"
                   />
                   
                   <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-2">
                     <Shield className="w-3.5 h-3.5" />
-                    <span>Key của bạn chỉ được lưu trên trình duyệt máy bạn (localStorage) để truyền trực tiếp.</span>
+                    <span>Key chỉ lưu trên trình duyệt của bạn (localStorage). Để trống nếu muốn dùng key chia sẻ.</span>
                   </div>
                 </div>
 
-                {geminiApiKey && (
+                {groqApiKey && (
                   <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl text-emerald-700 dark:text-emerald-400 text-sm font-medium">
                     <CheckCircle2 className="w-5 h-5" />
-                    Chúng tôi sẽ ưu tiên dùng Key này thay vì trạm Server gốc.
+                    Đã thiết lập Groq API Key cá nhân.
                   </div>
                 )}
               </div>

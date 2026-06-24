@@ -18,7 +18,7 @@ interface InteractiveTheoryIDEProps {
 }
 
 export function InteractiveTheoryIDE({ initialCode, contextTitle = 'Lý thuyết minh họa', lessonId }: InteractiveTheoryIDEProps) {
-  const { geminiApiKey } = useSettings();
+  const { groqApiKey } = useSettings();
   const trimmedInitial = initialCode.trim();
   
   const [code, setCode] = useState(trimmedInitial);
@@ -202,7 +202,7 @@ export function InteractiveTheoryIDE({ initialCode, contextTitle = 'Lý thuyết
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'X-Gemini-API-Key': geminiApiKey } : {})
+          ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
         },
         body: JSON.stringify({
           code,

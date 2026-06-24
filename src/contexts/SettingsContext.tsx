@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 interface SettingsContextType {
-  geminiApiKey: string;
-  setGeminiApiKey: (key: string) => void;
+  groqApiKey: string;
+  setGroqApiKey: (key: string) => void;
   isSettingsOpen: boolean;
   setIsSettingsOpen: (isOpen: boolean) => void;
 }
@@ -10,16 +10,16 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [geminiApiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
+  const [groqApiKey, setApiKey] = useState(() => localStorage.getItem('groqApiKey') || '');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const setGeminiApiKey = (key: string) => {
+  const setGroqApiKey = (key: string) => {
     setApiKey(key);
-    localStorage.setItem('geminiApiKey', key);
+    localStorage.setItem('groqApiKey', key);
   };
 
   return (
-    <SettingsContext.Provider value={{ geminiApiKey, setGeminiApiKey, isSettingsOpen, setIsSettingsOpen }}>
+    <SettingsContext.Provider value={{ groqApiKey, setGroqApiKey, isSettingsOpen, setIsSettingsOpen }}>
       {children}
     </SettingsContext.Provider>
   );

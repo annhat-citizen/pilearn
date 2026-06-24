@@ -25,7 +25,7 @@ export function PracticeIDE({
   hints = '',
   exampleInputOutput = ''
 }: PracticeIDEProps) {
-  const { geminiApiKey } = useSettings();
+  const { groqApiKey } = useSettings();
   const [code, setCode] = useState(() => {
     // Try to pre-populate with common python scaffolding if empty
     return '# Gõ code của bạn tại đây\n\n';
@@ -203,7 +203,7 @@ export function PracticeIDE({
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'X-Gemini-API-Key': geminiApiKey } : {})
+          ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
         },
         body: JSON.stringify({
           code: currentCode,
@@ -337,7 +337,7 @@ export function PracticeIDE({
         method: 'POST',
         headers: { 
            'Content-Type': 'application/json',
-           ...(geminiApiKey ? { 'X-Gemini-API-Key': geminiApiKey } : {})
+           ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
         },
         body: JSON.stringify({
           code: code,

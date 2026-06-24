@@ -1,16 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
 import Groq from 'groq-sdk';
 
 let keyIndex = 0;
 function getGroqKey(customKeyStr?: string) {
   let keys: string[] = [];
-  if (customKeyStr && customKeyStr.includes('gsk_')) {
+  if (customKeyStr && customKeyStr.startsWith('gsk_')) {
     keys = customKeyStr.split(',').map(k => k.trim()).filter(Boolean);
-  } else if (customKeyStr) {
-    return customKeyStr;
   } else {
-    const envKeys = process.env.GROQ_API_KEYS || process.env.GEMINI_API_KEY || '';
+    const envKeys = process.env.GROQ_API_KEYS || '';
     keys = envKeys.split(',').map(k => k.trim()).filter(Boolean);
   }
   if (keys.length === 0) return null;
@@ -19,48 +16,14 @@ function getGroqKey(customKeyStr?: string) {
   return key;
 }
 
-async function callAI(systemPrompt: string, apiKey: string, jsonResponse: boolean = false) {
-  const geminiEnvKey = (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY')
-    ? process.env.GEMINI_API_KEY
-    : undefined;
-
-  const finalGeminiKey = (apiKey && !apiKey.startsWith('gsk_') && apiKey !== 'MY_GEMINI_API_KEY')
-    ? apiKey
-    : geminiEnvKey;
-
-  if (finalGeminiKey && finalGeminiKey.trim() !== '') {
-    try {
-      const ai = new GoogleGenAI({ apiKey: finalGeminiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: systemPrompt,
-        config: jsonResponse ? { responseMimeType: 'application/json' } : {}
-      });
-      if (response && response.text) {
-        return response.text;
-      }
-    } catch (geminiErr: any) {
-      console.warn("Primary Gemini execution failed:", geminiErr?.message);
-    }
-  }
-
-  const isGroqPlaceholder = apiKey && apiKey.startsWith('gsk_') && (apiKey === 'gsk_1' || apiKey === 'gsk_2' || apiKey === 'gsk_3');
-  if (apiKey && apiKey.startsWith('gsk_') && !isGroqPlaceholder) {
-    try {
-      const client = new Groq({ apiKey });
-      const response = await client.chat.completions.create({
-        messages: [{ role: 'user', content: systemPrompt }],
-        model: 'llama-3.1-8b-instant',
-        ...(jsonResponse ? { response_format: { type: 'json_object' } } : {})
-      });
-      return response.choices[0]?.message?.content;
-    } catch (e: any) {
-      console.warn("Groq request failed:", e?.message);
-      throw e;
-    }
-  }
-
-  throw new Error("No valid configured API Key (Gemini or Groq) found.");
+async function callGroq(systemPrompt: string, apiKey: string, jsonResponse: boolean = false) {
+  const client = new Groq({ apiKey });
+  const response = await client.chat.completions.create({
+    messages: [{ role: 'user', content: systemPrompt }],
+    model: 'llama-3.1-8b-instant',
+    ...(jsonResponse ? { response_format: { type: 'json_object' } } : {})
+  });
+  return response.choices[0]?.message?.content;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -70,13 +33,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Gemini-API-Key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
 
   try {
     const { code, error, studentMessage, context, level = 'Lớp 10 - 12', isHomepage = false } = req.body;
-    const gkey = getGroqKey(req.headers['x-gemini-api-key'] as string);
+    const gkey = getGroqKey(req.headers['x-api-key'] as string);
     if (!gkey) {
-      return res.status(500).json({ reply: "Lỗi hệ thống: Chưa cấu hình API Keys." });
+      return res.status(500).json({ reply: "Lỗi hệ thống: Chưa cấu hình Groq API Key." });
     }
 
     const isHomeRequest = isHomepage || (context && (context.includes('Home') || context.includes('Trợ lý học lập trình Tuyệt Đỉnh') || context.includes('chăm sóc khách hàng')));
@@ -119,7 +82,7 @@ Câu hỏi của học sinh: ${studentMessage}
 `;
     }
 
-    const responseText = await callAI(promptText, gkey, false);
+    const responseText = await callGroq(promptText, gkey, false);
     res.json({ reply: responseText || 'Xin lỗi, Gia Sư AI không có phản hồi.' });
   } catch (err: any) {
     console.error('Tutor API error:', err?.message || err);

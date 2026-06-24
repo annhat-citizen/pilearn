@@ -18,7 +18,7 @@ interface Message {
 }
 
 export function AIAssistant({ currentCode, errorMsg, context, isOpen, onClose, initialLevel = 'Lớp 10 - 12' }: AIAssistantProps) {
-  const { geminiApiKey } = useSettings();
+  const { groqApiKey } = useSettings();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ export function AIAssistant({ currentCode, errorMsg, context, isOpen, onClose, i
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          ...(geminiApiKey ? { 'X-Gemini-API-Key': geminiApiKey } : {})
+          ...(groqApiKey ? { 'X-API-Key': groqApiKey } : {})
         },
         body: JSON.stringify({
           code: currentCode,
