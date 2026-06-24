@@ -31,6 +31,7 @@ import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { motion, AnimatePresence } from 'motion/react';
 import { PromoBanner } from './components/PromoBanner';
 import { AuthCallback } from './views/AuthCallback';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function MainLayout() {
   // Handle Supabase OAuth callback
@@ -60,6 +61,7 @@ function MainLayout() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <PromoBanner />
 
@@ -102,6 +104,7 @@ function MainLayout() {
       <CommandPalette />
       <BackgroundMusicPlayer />
     </div>
+    </ErrorBoundary>
   );
 }
 
