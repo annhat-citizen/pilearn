@@ -9,8 +9,7 @@ import {
 } from '../lib/nocode_store';
 import { NoCodeRenderer } from '../components/NoCodeRenderer';
 import { 
-  Sparkles, Save, X, Edit3, ShieldAlert, 
-  Smartphone, Tablet, Monitor, Info, Bell 
+  Sparkles, Save, X, Edit3, Bell 
 } from 'lucide-react';
 
 interface HomeProps {
@@ -24,7 +23,6 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
-  // Sync with Firestore on mount
   useEffect(() => {
     const syncDb = async () => {
       setLoading(true);
@@ -34,7 +32,6 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
     };
     syncDb();
 
-    // Listen to changes from Admin Dashboard
     const handleConfigSync = () => setConfig(getLocalNoCodeConfig());
     window.addEventListener('pilearn_config_sync', handleConfigSync);
     return () => window.removeEventListener('pilearn_config_sync', handleConfigSync);
@@ -63,11 +60,11 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
     try {
       await saveNoCodeConfigDb(config, profile?.email || 'admin@pilearn.com', `Chỉnh sửa trực tiếp (Live Edit) trang ${activePage.name}`);
       window.dispatchEvent(new Event('pilearn_config_sync'));
-      setSaveStatus('🎉 Đã xuất bản mọi thay đổi trực tiếp lên website thành công!');
+      setSaveStatus('Đã xuất bản mọi thay đổi trực tiếp lên website thành công!');
       setTimeout(() => setSaveStatus(null), 4000);
       setIsEditMode(false);
     } catch (e) {
-      setSaveStatus('❌ Lỗi lưu dữ liệu. Đã sao lưu bản nháp tại Local Storage.');
+      setSaveStatus('Lỗi lưu dữ liệu. Đã sao lưu bản nháp tại Local Storage.');
       setTimeout(() => setSaveStatus(null), 4000);
     } finally {
       setLoading(false);
@@ -81,53 +78,51 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
 
   return (
     <div className="w-full relative min-h-screen">
-      {/* 1. Dynamic System Announcement Banner (If checked by admin) */}
       {config.systemSettings.showNotificationOnHome && config.systemSettings.systemNotification && (
-        <div className="bg-amber-500 text-slate-900 font-bold py-2.5 px-4 text-center text-xs sm:text-sm flex items-center justify-center gap-2 animate-pulse relative z-20">
+        <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 font-medium py-2.5 px-4 text-center text-xs sm:text-sm flex items-center justify-center gap-2 relative z-20 border-b border-amber-100 dark:border-amber-900/30">
           <Bell size={14} className="shrink-0" />
           <span>{config.systemSettings.systemNotification}</span>
         </div>
       )}
 
-      {/* 2. Floating Admin Bar for Live Inline Editing */}
       {role === 'super_admin' && (
-        <div className="sticky top-20 z-50 max-w-5xl mx-auto px-4 mt-2">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300">
+        <div className="sticky top-16 z-50 max-w-5xl mx-auto px-4 mt-2">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#0052cc] flex items-center justify-center">
                 <Sparkles size={16} className="text-white" />
               </div>
               <div>
-                <h4 className="text-xs font-black tracking-wide uppercase text-blue-400">Trình Chỉnh Sửa Trực Tiếp (Live Builder)</h4>
-                <p className="text-[10px] text-slate-400">Bạn đang xem với quyền Admin. Click trực tiếp lên bất kỳ văn bản nào để sửa.</p>
+                <h4 className="text-xs font-bold uppercase text-[#0052cc] dark:text-blue-400">Trình Chỉnh Sửa Trực Tiếp</h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Click trực tiếp lên bất kỳ văn bản nào để sửa.</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2.5">
               <button 
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer select-none ${
+                className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
                   isEditMode 
-                    ? 'bg-amber-500 text-slate-950 font-black scale-105' 
-                    : 'bg-slate-800 text-slate-200 hover:bg-slate-755'
+                    ? 'bg-amber-500 text-white' 
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                 }`}
               >
                 <Edit3 size={13} />
-                <span>{isEditMode ? '⏸️ Tắt Chỉnh Sửa' : '⚡ Bật Click Sửa Trực Tiếp'}</span>
+                <span>{isEditMode ? 'Tắt Chỉnh Sửa' : 'Bật Click Sửa Trực Tiếp'}</span>
               </button>
 
               {isEditMode && (
-                <div className="flex items-center gap-2.5 border-l border-slate-800 pl-2.5">
+                <div className="flex items-center gap-2.5 border-l border-gray-200 dark:border-slate-700 pl-2.5">
                   <button 
                     onClick={handleSaveLiveChanges}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
                   >
                     <Save size={13} />
-                    <span>Lưu Trực Tiếp</span>
+                    <span>Lưu</span>
                   </button>
                   <button 
                     onClick={handleCancelLiveChanges}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs font-medium rounded-lg flex items-center gap-1 cursor-pointer"
                   >
                     <X size={13} />
                     <span>Hủy</span>
@@ -143,7 +138,7 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="bg-yellow-500 text-slate-950 text-xs font-black px-4 py-2.5 rounded-xl mt-2 text-center shadow-md border border-amber-600/20"
+                className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 text-xs font-medium px-4 py-2.5 rounded-lg mt-2 text-center border border-amber-200 dark:border-amber-900/30"
               >
                 {saveStatus}
               </motion.div>
@@ -152,11 +147,10 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
         </div>
       )}
 
-      {/* 3. Core dynamic page renderer */}
       <div className="relative z-10 w-full">
         {loading && !config ? (
-          <div className="py-24 text-center text-sm font-semibold text-slate-500">
-             Đang đồng bộ giao diện No-Code...
+          <div className="py-24 text-center text-sm font-medium text-slate-500">
+            Đang đồng bộ giao diện No-Code...
           </div>
         ) : (
           <NoCodeRenderer 
@@ -172,7 +166,6 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
                     if (blockIdx === -1) return p;
                     const nextIdx = dir === 'up' ? blockIdx - 1 : blockIdx + 1;
                     if (nextIdx < 0 || nextIdx >= p.blocks.length) return p;
-                    
                     const newBlocks = [...p.blocks];
                     const temp = newBlocks[blockIdx];
                     newBlocks[blockIdx] = newBlocks[nextIdx];
@@ -205,7 +198,6 @@ export function Home({ previewAlias = 'home' }: HomeProps) {
               }
               const newType = chosen.trim().toLowerCase() as any;
 
-              // Draft template layouts
               const newBlockMap: Record<string, Partial<any>> = {
                 banner: { title: 'Dòng tiêu đề Banner mới', subtitle: 'Phụ đề banner tinh gọn...', buttonText: 'Đăng ký học', imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=2070&auto=format&fit=crop' },
                 text: { title: 'Văn bản hướng dẫn', content: 'Nội dung khối văn bản mới của bạn.' },

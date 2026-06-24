@@ -1,135 +1,132 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-slate-900: #132646; /* kidsland navy */
-  --color-slate-800: #1b3664;
-  --color-slate-700: #264a87;
-  --color-slate-600: #3c65a8;
-  
-  --color-blue-600: #fa6d55; /* primary coral - overrides standard blue-600 */
-  --color-blue-700: #e55c45;
-  --color-blue-500: #ff8570;
-  --color-blue-100: #ffd8d1;
-  --color-blue-50: #fff0ed;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #0052cc;
+  --color-primary-600: #0041a3;
+  --color-primary-700: #00317a;
+  --color-primary-800: #002152;
+  --color-primary-900: #001029;
 
-  --color-sky-500: #00c0c0; /* teal */
-  --color-sky-100: #ccf2f2;
-  --color-sky-50: #e5f9f9;
+  --color-accent-50: #ecfeff;
+  --color-accent-100: #cffafe;
+  --color-accent-200: #a5f3fc;
+  --color-accent-300: #67e8f9;
+  --color-accent-400: #22d3ee;
+  --color-accent-500: #00b4ff;
+  --color-accent-600: #0090cc;
+  --color-accent-700: #006c99;
+  --color-accent-800: #004866;
+  --color-accent-900: #002433;
 
-  --color-amber-500: #ffc759; /* yellow */
-  
-  --color-green-500: #a9e246; /* green */
-  --color-green-600: #88c025;
-
-  --font-sans: "Quicksand", ui-sans-serif, system-ui, sans-serif;
-  --font-bold: "Fredoka", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-bold: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Dark mode global overrides for standard classes */
 @layer base {
   body {
-    background-color: #fffbf0;
-    color: var(--color-slate-900);
+    background-color: #f8fafc;
+    color: #0f172a;
   }
 
   h1, h2, h3, h4, h5, h6, .font-bold {
     font-family: var(--font-bold);
   }
-  
-  /* Buttons should be rounder */
+
   button {
-    border-radius: 9999px;
-  }
-  input, textarea, select {
-    border-radius: 20px;
-  }
-  /* Cards rounder */
-  .rounded-xl, .rounded-2xl, .rounded-3xl {
-    border-radius: 24px !important;
+    border-radius: 10px;
   }
 
-  /* Make dark mode adapt gracefully or just turn it off basically */
+  input, textarea, select {
+    border-radius: 10px;
+  }
+
   .dark .bg-white {
-    background-color: #132646 !important; /* navy */
+    background-color: #1e293b !important;
   }
-  .dark body, .dark .bg-[#fafafa], .dark .bg-[#fffbf0] {
-    background-color: #0d1a30 !important;
+
+  .dark body, .dark .bg-[#fafafa], .dark .bg-[#f8fafc] {
+    background-color: #0f172a !important;
   }
-  .dark .bg-white\/70 {
-    background-color: rgba(19, 38, 70, 0.7) !important;
-  }
-  .dark .bg-white\/80 {
-    background-color: rgba(19, 38, 70, 0.8) !important;
-  }
+
   .dark .text-slate-900, .dark .text-gray-900, .dark .text-black {
-    color: #f1f5f9 !important; /* slate-100 */
-  }
-  .dark .text-slate-700, .dark .text-gray-700, .dark .text-gray-600 {
-    color: #cbd5e1 !important; /* slate-300 */
-  }
-  .dark .text-gray-500, .dark .text-slate-500 {
-    color: #94a3b8 !important; /* slate-400 */
-  }
-  .dark .border-gray-200, .dark .border-gray-100, .dark .border-gray-300 {
-    border-color: #264a87 !important; /* slate-700 */
-  }
-  .dark .bg-gray-50, .dark .bg-slate-50 {
-    background-color: #1b3664 !important; /* slate-800 */
-  }
-  .dark .bg-gray-100, .dark .bg-slate-100 {
-    background-color: #264a87 !important; /* slate-700 */
-  }
-  .dark .bg-blue-50 {
-    background-color: #420f06 !important; 
-  }
-  .dark .bg-blue-100 {
-    background-color: #6a1a09 !important; 
-  }
-  .dark .text-blue-600 {
-    color: #ff8570 !important; 
-  }
-  .dark .shadow-sm {
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
-  }
-  .dark .prose {
-    color: #cbd5e1 !important;
-  }
-  .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose strong {
     color: #f1f5f9 !important;
   }
-  .dark .prose code {
-    color: #ff8570 !important;
+
+  .dark .text-slate-700, .dark .text-gray-700, .dark .text-gray-600 {
+    color: #cbd5e1 !important;
+  }
+
+  .dark .text-gray-500, .dark .text-slate-500 {
+    color: #94a3b8 !important;
+  }
+
+  .dark .border-gray-200, .dark .border-gray-100, .dark .border-gray-300 {
+    border-color: #334155 !important;
+  }
+
+  .dark .bg-gray-50, .dark .bg-slate-50 {
+    background-color: #1e293b !important;
+  }
+
+  .dark .bg-gray-100, .dark .bg-slate-100 {
+    background-color: #334155 !important;
+  }
+
+  .dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
   }
 }
 
-.liquid-glass {
-  background: rgba(255, 255, 255, 0.01);
-  background-blend-mode: luminosity;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  position: relative;
-  overflow: hidden;
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.liquid-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.4px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
 }
 
-/* Focus Mode Adjustments */
+.btn-primary {
+  background: #0052cc;
+  color: white;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 10px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover {
+  background: #0041a3;
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-ghost {
+  color: #475569;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: #f1f5f9;
+}
+
 body.focus-mode-active nav,
 body.focus-mode-active footer,
 body.focus-mode-active .fixed.bottom-6.right-6 {
@@ -145,4 +142,3 @@ body.focus-mode-active .mb-8 {
   margin-top: 1rem !important;
   margin-bottom: 1rem !important;
 }
-

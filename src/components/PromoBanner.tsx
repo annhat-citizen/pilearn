@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 
 export function PromoBanner() {
   const [isVisible, setIsVisible] = useState(() => {
@@ -9,16 +9,14 @@ export function PromoBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-purple-800 text-white py-2 px-4 text-center text-xs sm:text-sm font-bold relative z-[100] flex items-center justify-between shadow-md">
-      <div className="flex-1 flex items-center justify-center gap-2">
-        <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-          LIMITED OFFER - 67% OFF
+    <div className="bg-gradient-to-r from-[#0052cc] via-[#0066ee] to-[#00b4ff] text-white py-2.5 px-4 text-center text-xs sm:text-sm font-medium relative z-[100] flex items-center justify-between shadow-sm">
+      <div className="flex-1 flex items-center justify-center gap-2.5">
+        <Sparkles className="w-4 h-4 shrink-0 text-yellow-200" />
+        <span className="hidden md:inline">
+          Mở khóa toàn bộ lộ trình Python Pro và nhận trợ giúp Sư Phụ AI 24/7!
         </span>
-        <span className="text-slate-100 font-bold hidden md:inline">
-          Mở khóa toàn bộ lộ trình Python Pro 10 và nhận trợ giúp Sư Phụ AI 24/7!
-        </span>
-        <span className="text-slate-100 font-bold md:hidden">
-          Python Pro & Sư phụ AI giảm 67%!
+        <span className="md:hidden">
+          Python Pro & Sư phụ AI - Ưu đãi đặc biệt!
         </span>
         <a 
           href="#pricing"
@@ -29,10 +27,10 @@ export function PromoBanner() {
               pricingEl.scrollIntoView({ behavior: 'smooth' });
             }
           }}
-          className="ml-2 bg-white text-indigo-700 hover:bg-slate-100 font-extrabold px-3 py-1 rounded-full text-xs transition-all shadow-sm active:scale-95 flex items-center gap-1"
+          className="ml-2 bg-white text-[#0052cc] hover:bg-slate-100 font-bold px-3.5 py-1.5 rounded-lg text-xs transition-all active:scale-95 inline-flex items-center gap-1"
         >
-          <span>Đăng ký ngay</span>
-          <span className="text-[10px]">→</span>
+          Đăng ký ngay
+          <span className="text-xs">→</span>
         </a>
       </div>
       <button
@@ -40,7 +38,7 @@ export function PromoBanner() {
           setIsVisible(false);
           localStorage.setItem('pilearn_promo_banner_closed', 'true');
         }}
-        className="text-white/60 hover:text-white transition-colors p-1"
+        className="text-white/70 hover:text-white transition-colors p-1 ml-2"
         aria-label="Đóng"
       >
         <X size={14} />

@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useEffect } from 'react';
 import { AppProvider, useAppContext } from './store';
 import { audioService } from './utils/audio';
@@ -41,13 +36,11 @@ import { PromoBanner } from './components/PromoBanner';
 function MainLayout() {
   const { view, updateStudyTime, nocodeConfig, isEditMode } = useAppContext();
   const [isAppearanceEditorOpen, setIsAppearanceEditorOpen] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark' || 
       (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
-  
-  // Apply Appearance
+
   useEffect(() => {
     const appearance = nocodeConfig?.appearance;
     if (!appearance) return;
@@ -63,51 +56,39 @@ function MainLayout() {
       appearance.fontFamily === 'mono' ? '"JetBrains Mono", monospace' : 
       appearance.fontFamily === 'grotesk' ? '"Space Grotesk", sans-serif' :
       appearance.fontFamily === 'serif' ? '"Playfair Display", serif' :
-      '"Quicksand", sans-serif';
+      '"Inter", sans-serif';
 
     const borderRadiusValue = 
       appearance.borderRadius === 'none' ? '0px' :
       appearance.borderRadius === 'md' ? '8px' :
       appearance.borderRadius === '2xl' ? '16px' :
-      '24px'; // 3xl / default
+      '24px';
 
     styleTag.innerHTML = `
       :root {
-        --color-blue-600: ${appearance.primaryColor} !important;
-        --color-blue-700: ${appearance.primaryColor}d0 !important;
-        --color-blue-500: ${appearance.primaryColor}ef !important;
+        --color-primary-500: ${appearance.primaryColor} !important;
+        --color-primary-600: ${appearance.primaryColor}d0 !important;
+        --color-primary-400: ${appearance.primaryColor}ef !important;
         --font-sans: ${fontValue} !important;
-        --font-bold: ${appearance.fontFamily === 'sans' ? '"Fredoka", sans-serif' : fontValue} !important;
+        --font-bold: ${appearance.fontFamily === 'sans' ? '"Plus Jakarta Sans", sans-serif' : fontValue} !important;
       }
       body {
-        background: #030712 !important;
+        background: #0f172a !important;
         color: #f1f5f9 !important;
         font-family: ${fontValue} !important;
       }
-      /* Sync other page cards and containers to dark glassmorphism */
       .bg-white, .dark .bg-white {
         background-color: rgba(15, 23, 42, 0.75) !important;
         backdrop-filter: blur(16px) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         color: #f1f5f9 !important;
       }
-      .bg-slate-50, .dark .bg-slate-900/40, .bg-gray-50/50, .bg-gray-50 {
-        background-color: rgba(9, 15, 30, 0.6) !important;
-        border-color: rgba(255, 255, 255, 0.05) !important;
-      }
-      .text-slate-900, .text-slate-800, .text-slate-850, .text-gray-900, .text-gray-800, .text-slate-950 {
+      .text-slate-900, .text-gray-900, .text-slate-800 {
         color: #f1f5f9 !important;
       }
-      .text-gray-550, .text-slate-550 {
-        color: #64748b !important;
-      }
-      .text-gray-500, .text-slate-500, .text-slate-400, .text-gray-400 {
-        color: #94a3b8 !important;
-      }
-      .border-gray-200, .border-slate-200, .border-gray-100, .border-slate-100 {
+      .border-gray-200, .border-slate-200, .border-gray-100 {
         border-color: rgba(255, 255, 255, 0.08) !important;
       }
-      /* Input elements styling */
       input, select, textarea {
         background-color: rgba(15, 23, 42, 0.7) !important;
         border-color: rgba(255, 255, 255, 0.1) !important;
@@ -123,9 +104,7 @@ function MainLayout() {
   }, [nocodeConfig.appearance]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      updateStudyTime(60);
-    }, 60000);
+    const interval = setInterval(() => updateStudyTime(60), 60000);
     return () => clearInterval(interval);
   }, [updateStudyTime]);
 
@@ -139,52 +118,18 @@ function MainLayout() {
     }
   }, [isDarkMode]);
 
-  useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 100;
-      const y = (e.clientY / window.innerHeight) * 100;
-      setMousePos({ x, y });
-    };
-    window.addEventListener('mousemove', handleGlobalMouseMove);
-    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
-  }, []);
-
-  // Initialize AOS (Animate On Scroll) globally via CDN scripts defined in index.html
-  useEffect(() => {
-    if (typeof (window as any).AOS !== 'undefined') {
-      (window as any).AOS.init({
-        duration: 1800,
-        once: false,
-        mirror: true,
-        offset: 80,
-      });
-    }
-  }, []);
-
-  // Refresh AOS elements whenever user switches views / pages
-  useEffect(() => {
-    if (typeof (window as any).AOS !== 'undefined') {
-      const timer = setTimeout(() => {
-        (window as any).AOS.refresh();
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [view]);
-
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
-  // Define layout colors based on theme and view (all dark mode to match home page style)
-  const baseLayoutClass = 'bg-[#030712] text-slate-100 dark:bg-[#030712] dark:text-gray-100';
+  const layoutBg = isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#f8fafc] text-slate-900';
 
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Heuristic to detect button-like elements
       if (
         target.tagName === 'BUTTON' || 
         target.closest('button') || 
         target.classList.contains('cursor-pointer') ||
-        target.dataset.interactive === 'true' // Optional: allow explicit marking
+        target.dataset.interactive === 'true'
       ) {
         audioService.playClick();
       }
@@ -194,47 +139,27 @@ function MainLayout() {
   }, []);
 
   return (
-    <div className={`min-h-[100vh] flex flex-col font-sans transition-colors duration-500 relative overflow-hidden ${baseLayoutClass}`}>
+    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${layoutBg}`}>
       <PromoBanner />
-      {/* Dark Mode Toggle Button */}
       <button 
         onClick={toggleDarkMode}
-        className="tutorial-step-4 fixed bottom-6 right-6 z-50 p-3 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-md text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-lg hover:scale-110 transition-transform"
+        className="fixed bottom-6 right-6 z-50 p-3 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:scale-105 transition-transform"
         aria-label="Toggle Dark Mode"
       >
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      {/* Interactive Global Background (only visible when not on home video) */}
-      {view !== 'home' && (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-           {/* Soft base gradients */}
-           <div className="absolute -top-[20%] -right-[10%] w-[50rem] h-[50rem] bg-pink-100/30 dark:bg-pink-900/10 rounded-full blur-[100px]" />
-           <div className="absolute -bottom-[20%] -left-[10%] w-[60rem] h-[60rem] bg-blue-100/30 dark:bg-blue-900/10 rounded-full blur-[120px]" />
-           
-           {/* Active mouse follower glow */}
-           <div 
-             className="absolute w-[40rem] h-[40rem] bg-blue-300/10 dark:bg-blue-400/5 rounded-full blur-[80px] transition-transform duration-200 ease-out z-0" 
-             style={{ transform: `translate(calc(${mousePos.x}vw - 20rem), calc(${mousePos.y}vh - 20rem))` }}
-           />
-           <div 
-             className="absolute w-[30rem] h-[30rem] bg-indigo-300/10 dark:bg-indigo-400/5 rounded-full blur-[80px] transition-transform duration-500 ease-out z-0" 
-             style={{ transform: `translate(calc(${mousePos.x}vw - 15rem), calc(${mousePos.y}vh - 15rem))` }}
-           />
-        </div>
-      )}
-
-      <div className="relative z-10 flex flex-col flex-1 min-h-screen">
+      <div className="relative z-10 flex flex-col flex-1">
         <Navigation />
-        <main className="flex-1 relative pb-24 flex flex-col">
+        <main className="flex-1 flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
               key={view}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="w-full h-full flex flex-col flex-1"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="flex-1 flex flex-col"
             >
               {view === 'home' && <Home />}
               {view === 'roadmap' && <Roadmap />}
@@ -257,12 +182,9 @@ function MainLayout() {
             </motion.div>
           </AnimatePresence>
         </main>
-        {view !== 'home' && (
-          <div className="mt-20"></div>
-        )}
         <Footer />
       </div>
-      {isAppearanceEditorOpen && <GlobalAppearanceEditor onClose={() => setIsAppearanceEditorOpen(false)} />}
+      <GlobalAppearanceEditor onClose={() => setIsAppearanceEditorOpen(false)} />
       <CompleteProfileModal />
       <LevelUpPopup />
       <StreakPopup />
@@ -271,7 +193,6 @@ function MainLayout() {
     </div>
   );
 }
-
 
 export default function App() {
   return (
@@ -283,4 +204,3 @@ export default function App() {
     </SettingsProvider>
   );
 }
-
