@@ -30,8 +30,13 @@ import { CommandPalette } from './components/CommandPalette';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { motion, AnimatePresence } from 'motion/react';
 import { PromoBanner } from './components/PromoBanner';
+import { AuthCallback } from './views/AuthCallback';
 
 function MainLayout() {
+  // Handle Supabase OAuth callback
+  if (window.location.pathname.startsWith('/auth/callback')) {
+    return <AuthCallback />;
+  }
   const { view, updateStudyTime } = useAppContext();
 
   useEffect(() => {

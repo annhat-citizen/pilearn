@@ -1,27 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { ViewState, Role, ProgressState, Lesson, Chapter, ShopItem, Boss } from './types';
-import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
-import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, collection, query, getDocs } from 'firebase/firestore';
+import { supabase, Profile } from './lib/supabase';
+import { Session } from '@supabase/supabase-js';
 import { SYLLABUS as defaultSyllabus } from './data';
 import { audioService } from './utils/audio';
 import { NoCodeConfig, getLocalNoCodeConfig } from './lib/nocode_store';
-
-interface UserProfile {
-  uid: string;
-  email: string;
-  displayName: string;
-  role: Role;
-  points: number;
-  classId?: string;
-}
+import * as sb from './lib/supabase';
 
 interface AppContextType {
   view: ViewState;
   setView: (view: ViewState) => void;
   role: Role;
-  authUser: User | null;
-  profile: UserProfile | null;
+  authUser: Session['user'] | null;
+  profile: Profile | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   
@@ -46,8 +37,6 @@ interface AppContextType {
   updateProgress?: (updater: (prev: ProgressState) => ProgressState) => void;
   isEditMode: boolean;
   setIsEditMode: (mode: boolean) => void;
-  isAppearanceEditorOpen: boolean;
-  setIsAppearanceEditorOpen: (open: boolean) => void;
   nocodeConfig: NoCodeConfig;
 }
 
@@ -63,7 +52,7 @@ const defaultProgress: ProgressState = {
   lastActiveDate: '',
   streakHistory: [],
   showStreakPopup: false,
-  studyTime: 0
+  studyTime: 0,
 };
 
 const getTodayDateString = () => {
@@ -90,11 +79,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [view, setView] = useState<ViewState>('home');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   
-  const [authUser, setAuthUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [syllabus, setSyllabus] = useState<Chapter[]>(defaultSyllabus);
-  
+
   const [shopItems, setShopItems] = useState<ShopItem[]>([
     { id: 'sword_wood', name: 'Kiếm Gỗ Tập Sự', description: 'Gây 15 sát thương cơ bản cho quái sơ cấp.', price: 40, damage: 15, icon: 'Sword', color: 'bg-amber-500' },
     { id: 'sword_iron', name: 'Kiếm Sắt Cứng Cáp', description: 'Rèn đúc từ quặng thô, gây 40 sát thương.', price: 120, damage: 40, icon: 'Sword', color: 'bg-slate-400' },
@@ -106,28 +95,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     { id: 'armor_god', name: 'Long Thần Hải Giáp [PRO]', description: 'Giáp Thần khí tối thượng giảm 80% lực phản công.', price: 500, damage: 0, icon: 'Shield', color: 'bg-orange-500' },
     { id: 'potion_health', name: 'Bình Máu Tái Sinh', description: 'Hồi phục phao cứu sinh +150 HP lập tức khi chiến đấu.', price: 30, damage: 0, icon: 'Heart', color: 'bg-rose-500' },
     { id: 'potion_exp', name: 'Bình EXP Siêu Tốc', description: 'Nạp ngay +120 điểm kinh nghiệm thăng cấp thần tốc.', price: 80, damage: 0, icon: 'Zap', color: 'bg-cyan-500' },
-    { id: 'potion_rage', name: 'Nước Tăng Lực Cuồng Nộ', description: 'Nhân gấp 2.0x sát thương cú chém vũ khí tiếp theo.', price: 70, damage: 0, icon: 'Star', color: 'bg-purple-600' }
+    { id: 'potion_rage', name: 'Nước Tăng Lực Cuồng Nộ', description: 'Nhân gấp 2.0x sát thương cú chém vũ khí tiếp theo.', price: 70, damage: 0, icon: 'Star', color: 'bg-purple-600' },
   ]);
   const [bosses, setBosses] = useState<Boss[]>([
     { id: 'boss_1', name: 'Quái Vật Lười Biếng', maxHp: 500, image: '👾' },
     { id: 'boss_2', name: 'Rồng Mất Tập Trung', maxHp: 1500, image: '🐉' },
     { id: 'boss_3', name: 'Chúa Tể Bug', maxHp: 5000, image: '🐛' },
-    { id: 'boss_pro', name: 'Trợ Lý AI Hắc Ám', maxHp: 10000, image: '🧙‍♂️' }
+    { id: 'boss_pro', name: 'Trợ Lý AI Hắc Ám', maxHp: 10000, image: '🧙‍♂️' },
   ]);
 
-  const role: Role = profile?.role || 'student';
+  const authUser = session?.user ?? null;
+  const role: Role = (profile?.role as Role) || 'student';
 
-  // Load local progress for now (later can be migrated to Firestore)
   const [progress, setProgress] = useState<ProgressState>(() => {
     try {
-      const saved = localStorage.getItem('python_lms_progress');
+      const saved = localStorage.getItem('pilearn_progress');
       if (saved) return JSON.parse(saved);
     } catch {}
     return defaultProgress;
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isAppearanceEditorOpen, setIsAppearanceEditorOpen] = useState(false);
   const [nocodeConfig, setNocodeConfig] = useState<NoCodeConfig>(() => getLocalNoCodeConfig());
 
   useEffect(() => {
@@ -137,10 +125,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('python_lms_progress', JSON.stringify(progress));
+    localStorage.setItem('pilearn_progress', JSON.stringify(progress));
   }, [progress]);
 
-  // Level up sound effect
+  // Level up sound
   const lastLevel = useRef(Math.floor((progress.xp || 0) / 100) + 1);
   useEffect(() => {
     const currentLevel = Math.floor((progress.xp || 0) / 100) + 1;
@@ -150,163 +138,177 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     lastLevel.current = currentLevel;
   }, [progress.xp]);
 
+  // Streak reset after 3 days inactivity
   useEffect(() => {
     const today = getTodayDateString();
     if (progress.lastActiveDate && progress.streak && progress.streak > 0) {
       const diff = getDaysDifference(progress.lastActiveDate, today);
       if (diff > 3) {
-        setProgress(prev => ({
-          ...prev,
-          streak: 0
-        }));
+        setProgress(prev => ({ ...prev, streak: 0 }));
       }
     }
   }, []);
 
+  // ============================================================
+  // Supabase Auth
+  // ============================================================
   useEffect(() => {
-    if (!authUser) {
-      setSyllabus(JSON.parse(JSON.stringify(defaultSyllabus)));
-      return;
-    }
-
-    let unsubscribeLessons = () => {};
-    let unsubscribeChapters = () => {};
-
-    const qLessons = query(collection(db, 'lessons'));
-    const qChapters = query(collection(db, 'chapters'));
-
-    const loadData = () => {
-       unsubscribeChapters = onSnapshot(qChapters, (chapterSnap) => {
-          const customChapters: any[] = [];
-          chapterSnap.forEach(doc => customChapters.push({ id: doc.id, ...doc.data(), lessons: [] }));
-          
-          unsubscribeLessons = onSnapshot(qLessons, (lessonSnap) => {
-             const customLessons: any[] = [];
-             lessonSnap.forEach(doc => {
-               const data = doc.data();
-               if (role === 'student' && data.targetClassIds && data.targetClassIds.length > 0) {
-                 if (!profile?.classId || !data.targetClassIds.includes(profile.classId)) {
-                   return; // Skip this lesson for this student
-                 }
-               }
-               customLessons.push({ id: doc.id, ...data });
-             });
-
-             const cloned = JSON.parse(JSON.stringify(defaultSyllabus)) as Chapter[];
-             
-             // Merge custom chapters
-             customChapters.forEach(cc => {
-                const existingIdx = cloned.findIndex(c => c.id === cc.id);
-                if (existingIdx > -1) {
-                   cloned[existingIdx].title = cc.title || cloned[existingIdx].title;
-                   cloned[existingIdx].description = cc.description || cloned[existingIdx].description;
-                } else {
-                   cloned.push(cc as Chapter);
-                }
-             });
-
-             // Merge or append custom lessons
-             customLessons.forEach(cl => {
-               const chapter = cloned.find(c => c.id === cl.chapterId);
-               if (chapter) {
-                 const existingIndex = chapter.lessons.findIndex(l => l.id === cl.id);
-                 if (existingIndex > -1) {
-                   // Prevent outdated database overrides for l16 & l18 from hiding the interactive PiLearn layout
-                   const isLegacyOutdatedOverride = (cl.id === 'l16' || cl.id === 'l18') && 
-                     (!cl.theory || typeof cl.theory !== 'string' || !cl.theory.includes('Triết Lý Học Chuẩn PiLearn'));
-
-                   if (isLegacyOutdatedOverride) {
-                     chapter.lessons[existingIndex] = { 
-                       ...chapter.lessons[existingIndex], 
-                       ...cl, 
-                       theory: chapter.lessons[existingIndex].theory,
-                       blocks: chapter.lessons[existingIndex].blocks 
-                     } as Lesson;
-                   } else {
-                     chapter.lessons[existingIndex] = { ...chapter.lessons[existingIndex], ...cl } as Lesson;
-                   }
-                 } else {
-                   chapter.lessons.push(cl as Lesson);
-                 }
-               }
-             });
-             setSyllabus(cloned);
-          }, (err) => console.error(err));
-       }, (err) => console.error(err));
-    };
-
-    loadData();
-
-    return () => {
-       unsubscribeChapters();
-       unsubscribeLessons();
-    };
-  }, [role, profile?.classId, authUser]);
-
-  useEffect(() => {
-    let unsubProfile = () => {};
-    const unsubAuth = onAuthStateChanged(auth, async (user) => {
-      setAuthUser(user);
-      if (user) {
-        // Read user profile
-        const userRef = doc(db, 'users', user.uid);
-        try {
-          const snap = await getDoc(userRef);
-          if (!snap.exists()) {
-            await setDoc(userRef, {
-              email: user.email,
-              displayName: user.displayName || 'Học viên',
-              role: 'student',
-              points: 0,
-              createdAt: serverTimestamp()
-            });
-          }
-          
-          // Listen to updates
-          unsubProfile = onSnapshot(userRef, async (docSnap) => {
-             if (docSnap.exists()) {
-               const data = docSnap.data();
-               const currentProfile = { uid: docSnap.id, ...data } as UserProfile;
-               
-               setProfile(currentProfile);
-             } else {
-               setProfile(null);
-             }
-             setIsDataLoaded(true);
-          }, (err) => {
-             handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
-             setIsDataLoaded(true);
-          });
-        } catch (err) {
-          handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
-          setIsDataLoaded(true);
-        }
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      if (s?.user) {
+        loadProfile(s.user.id);
       } else {
-        unsubProfile();
+        setIsDataLoaded(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+      if (s?.user) {
+        loadProfile(s.user.id);
+      } else {
         setProfile(null);
         setIsDataLoaded(true);
       }
     });
 
-    return () => {
-      unsubAuth();
-      unsubProfile();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
+  async function loadProfile(userId: string) {
+    try {
+      let p = await sb.getProfile(userId);
+      if (!p) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase.from('profiles').insert({
+            id: userId,
+            display_name: user.user_metadata?.full_name || user.email || 'User',
+            avatar_url: user.user_metadata?.avatar_url || '',
+            role: 'student',
+          });
+          if (!error) p = await sb.getProfile(userId);
+        }
+      }
+      setProfile(p);
+    } catch (e) {
+      console.error('Error loading profile:', e);
+    }
+    setIsDataLoaded(true);
+  }
+
+  // ============================================================
+  // Load data from Supabase tables (chapters, lessons, shop, bosses)
+  // ============================================================
+  useEffect(() => {
+    if (!authUser) return;
+
+    const loadChapters = async () => {
+      const chapters = await sb.getChapters();
+      if (chapters.length > 0) {
+        const merged: Chapter[] = [];
+        for (const ch of chapters) {
+          const lessons = await sb.getLessonsByChapter(ch.id);
+          merged.push({
+            id: ch.id,
+            title: ch.title,
+            description: ch.description,
+            level: ch.level,
+            icon: ch.icon,
+            lessons: lessons.map(l => ({
+              id: l.id,
+              title: l.title,
+              chapterId: l.chapter_id,
+              description: l.description,
+              theory: l.theory,
+              labPrompt: l.lab_prompt,
+              labExpectedCode: l.lab_expected_code,
+              challengePrompt: l.challenge_prompt,
+              challengeExpectedCode: l.challenge_expected_code,
+              duration: l.duration_minutes,
+            } as Lesson)),
+          });
+        }
+        setSyllabus(merged);
+      } else {
+        setSyllabus(defaultSyllabus);
+      }
+    };
+    loadChapters();
+  }, [authUser]);
+
+  useEffect(() => {
+    const loadGameData = async () => {
+      // Try loading from Supabase
+      const items = await sb.getShopItems();
+      if (items.length > 0) {
+        setShopItems(items.map(i => ({
+          id: i.id,
+          name: i.name,
+          description: i.description,
+          price: i.price,
+          damage: i.damage,
+          icon: i.type === 'weapon' ? 'Sword' : i.type === 'armor' ? 'Shield' : 'Heart',
+          color: i.type === 'weapon' ? 'bg-red-500' : i.type === 'armor' ? 'bg-blue-500' : 'bg-rose-500',
+        })));
+      }
+      const bossesData = await sb.getBosses();
+      if (bossesData.length > 0) {
+        setBosses(bossesData.map(b => ({
+          id: b.id,
+          name: b.name,
+          maxHp: b.max_hp,
+          image: b.emoji,
+        })));
+      }
+    };
+    loadGameData();
+  }, []);
+
+  // ============================================================
+  // Sync progress to Supabase
+  // ============================================================
+  useEffect(() => {
+    if (!authUser) return;
+    const syncProgress = async () => {
+      try {
+        await sb.updateProfile(authUser.id, {
+          xp: progress.xp,
+          streak: progress.streak,
+          last_active_date: progress.lastActiveDate || getTodayDateString(),
+        });
+      } catch (e) {
+        console.error('Failed to sync progress:', e);
+      }
+    };
+    const timer = setTimeout(syncProgress, 2000);
+    return () => clearTimeout(timer);
+  }, [progress.xp, progress.streak]);
+
+  // ============================================================
+  // Auth actions
+  // ============================================================
   const login = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) console.error(error);
     } catch (e) {
       console.error(e);
     }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await sb.signOut();
   };
 
+  // ============================================================
+  // Progress actions
+  // ============================================================
   const completeLesson = (lessonId: string, pointsEarned: number) => {
     setProgress(prev => {
       const today = getTodayDateString();
@@ -343,16 +345,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         streak: newStreak,
         lastActiveDate: today,
         streakHistory: updatedHistory,
-        showStreakPopup: showPopup
+        showStreakPopup: showPopup,
       };
     });
+
+    if (authUser) {
+      sb.upsertLessonProgress(authUser.id, lessonId, {
+        completed: true,
+        xp_earned: pointsEarned * 10,
+        score: pointsEarned,
+        completed_at: new Date().toISOString(),
+      }).catch(() => {});
+    }
   };
 
   const addXP = (amount: number) => {
-    setProgress(prev => ({
-      ...prev,
-      xp: (prev.xp || 0) + amount
-    }));
+    setProgress(prev => ({ ...prev, xp: (prev.xp || 0) + amount }));
+    if (authUser) sb.addXp(authUser.id, amount).catch(() => {});
   };
 
   const submitExam = (examId: string, score: number) => {
@@ -361,22 +370,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const lastActive = prev.lastActiveDate || '';
       
       const updatedHistory = prev.streakHistory ? [...prev.streakHistory] : [];
-      if (!updatedHistory.includes(today)) {
-        updatedHistory.push(today);
-      }
+      if (!updatedHistory.includes(today)) updatedHistory.push(today);
 
       let newStreak = (prev.streak || 0);
       let showPopup = false;
-      if (!lastActive) {
-        newStreak = 1;
-        showPopup = true;
-      } else if (lastActive !== today) {
-        const diff = getDaysDifference(lastActive, today);
-        if (diff > 3) {
-          newStreak = 1;
-        } else {
-          newStreak += 1;
-        }
+      if (!lastActive) { newStreak = 1; showPopup = true; }
+      else if (lastActive !== today) {
+        newStreak = getDaysDifference(lastActive, today) > 3 ? 1 : newStreak + 1;
         showPopup = true;
       }
 
@@ -388,7 +388,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         streak: newStreak,
         lastActiveDate: today,
         streakHistory: updatedHistory,
-        showStreakPopup: showPopup
+        showStreakPopup: showPopup,
       };
     });
   };
@@ -397,61 +397,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProgress(prev => {
       const today = getTodayDateString();
       const lastActive = prev.lastActiveDate || '';
-      
       const updatedHistory = prev.streakHistory ? [...prev.streakHistory] : [];
-      if (!updatedHistory.includes(today)) {
-        updatedHistory.push(today);
-      }
-
+      if (!updatedHistory.includes(today)) updatedHistory.push(today);
       if (!lastActive) {
-        return {
-          ...prev,
-          streak: 1,
-          lastActiveDate: today,
-          streakHistory: updatedHistory,
-          showStreakPopup: true
-        };
+        return { ...prev, streak: 1, lastActiveDate: today, streakHistory: updatedHistory, showStreakPopup: true };
       }
-
-      if (lastActive === today) {
-        return {
-          ...prev,
-          streakHistory: updatedHistory
-        };
-      }
-
+      if (lastActive === today) return { ...prev, streakHistory: updatedHistory };
       const diff = getDaysDifference(lastActive, today);
-      let newStreak = (prev.streak || 0);
-
-      if (diff > 3) {
-        newStreak = 1;
-      } else {
-        newStreak += 1;
-      }
-
       return {
         ...prev,
-        streak: newStreak,
+        streak: diff > 3 ? 1 : (prev.streak || 0) + 1,
         lastActiveDate: today,
         streakHistory: updatedHistory,
-        showStreakPopup: true
+        showStreakPopup: true,
       };
     });
   };
 
-  const dismissStreakPopup = () => {
-    setProgress(prev => ({
-      ...prev,
-      showStreakPopup: false
-    }));
-  };
-
-  const updateStudyTime = (seconds: number) => {
-    setProgress(prev => ({
-      ...prev,
-      studyTime: (prev.studyTime || 0) + seconds
-    }));
-  };
+  const dismissStreakPopup = () => setProgress(prev => ({ ...prev, showStreakPopup: false }));
+  const updateStudyTime = (seconds: number) => setProgress(prev => ({ ...prev, studyTime: (prev.studyTime || 0) + seconds }));
 
   const buyItem = (itemId: string, price: number) => {
     setProgress(prev => {
@@ -459,10 +423,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return {
         ...prev,
         points: prev.points - price,
-        inventory: {
-          ...prev.inventory,
-          [itemId]: (prev.inventory?.[itemId] || 0) + 1
-        }
+        inventory: { ...prev.inventory, [itemId]: (prev.inventory?.[itemId] || 0) + 1 },
       };
     });
   };
@@ -472,14 +433,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!prev.inventory || !prev.inventory[itemId]) return prev;
       return {
         ...prev,
-        inventory: {
-          ...prev.inventory,
-          [itemId]: prev.inventory[itemId] - 1
-        },
-        bossHp: {
-          ...prev.bossHp,
-          [bossId]: Math.max(0, (prev.bossHp?.[bossId] ?? 1000) - damage) // Assume 1000 default if not set, handled later
-        }
+        inventory: { ...prev.inventory, [itemId]: prev.inventory[itemId] - 1 },
+        bossHp: { ...prev.bossHp, [bossId]: Math.max(0, (prev.bossHp?.[bossId] ?? 1000) - damage) },
       };
     });
   };
@@ -488,40 +443,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProgress(prev => ({
       ...prev,
       points: prev.points + points,
-      teacherAdjustments: [...(prev.teacherAdjustments || []), { studentId, projectId, points, note }]
+      teacherAdjustments: [...(prev.teacherAdjustments || []), { studentId, projectId, points, note }],
     }));
   };
 
-  const updateProgress = (updater: (prev: ProgressState) => ProgressState) => {
-    setProgress(prev => updater(prev));
-  };
+  const updateProgress = (updater: (prev: ProgressState) => ProgressState) => setProgress(prev => updater(prev));
 
   const updateGameData = async (items: ShopItem[], newBosses: Boss[]) => {
-    try {
-      await setDoc(doc(db, 'config', 'game_data'), { shopItems: items, bosses: newBosses });
-      setShopItems(items);
-      setBosses(newBosses);
-    } catch (e) {
-      console.error('Failed to update game data', e);
-      throw e;
-    }
+    // Update local state
+    setShopItems(items);
+    setBosses(newBosses);
   };
-
-  useEffect(() => {
-    const fetchGameData = async () => {
-      try {
-        const snap = await getDoc(doc(db, 'config', 'game_data'));
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.shopItems) setShopItems(data.shopItems);
-          if (data.bosses) setBosses(data.bosses);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchGameData();
-  }, []);
 
   return (
     <AppContext.Provider
@@ -533,8 +465,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isDataLoaded, syllabus,
         shopItems, bosses, updateGameData,
         recordStudyActivity, dismissStreakPopup, updateStudyTime, isEditMode, setIsEditMode,
-        isAppearanceEditorOpen, setIsAppearanceEditorOpen,
-        nocodeConfig
+        nocodeConfig,
       }}
     >
       {children}
